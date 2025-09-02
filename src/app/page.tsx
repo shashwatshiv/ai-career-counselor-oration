@@ -31,7 +31,6 @@ export default function HomePage() {
       router.push(`/chat/${session.id}`);
     },
   });
-
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/auth/signin");

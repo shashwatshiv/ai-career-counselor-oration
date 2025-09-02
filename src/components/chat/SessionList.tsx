@@ -34,7 +34,7 @@ export function SessionList({ currentSessionId }: SessionListProps) {
   const router = useRouter();
 
   const { data: sessionsData, isLoading } = api.chat.getSessions.useQuery({
-    limit: 20,
+    limit: 8,
   });
 
   const createSessionMutation = api.chat.createSession.useMutation({
@@ -58,7 +58,7 @@ export function SessionList({ currentSessionId }: SessionListProps) {
     },
   });
 
-  const utils = api.useContext();
+  const utils = api.useUtils();
 
   const handleCreateSession = () => {
     createSessionMutation.mutate({});
@@ -112,11 +112,11 @@ export function SessionList({ currentSessionId }: SessionListProps) {
       {sessionsData?.sessions?.map((session) => (
         <Card
           key={session.id}
-          className={`transition-colors hover:bg-muted/50 ${
+          className={`transition-colors p-1 m-2  hover:bg-muted/50 ${
             currentSessionId === session.id ? "ring-2 ring-blue-500" : ""
           }`}
         >
-          <CardContent className="p-3">
+          <CardContent className="p-1">
             <div className="flex items-center justify-between">
               <Link href={`/chat/${session.id}`} className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
@@ -126,9 +126,9 @@ export function SessionList({ currentSessionId }: SessionListProps) {
                       {session.title}
                     </p>
                     <div className="flex items-center gap-2 mt-1">
-                      <Badge variant="secondary" className="text-xs">
+                      {/* <Badge variant="secondary" className="text-xs">
                         {session._count.messages} messages
-                      </Badge>
+                      </Badge> */}
                       <span className="text-xs text-muted-foreground">
                         {format(new Date(session.updatedAt), "MMM d")}
                       </span>

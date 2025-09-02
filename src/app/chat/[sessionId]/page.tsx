@@ -36,15 +36,73 @@ export default function ChatPage() {
   );
 
   const sendMessageMutation = api.chat.sendMessage.useMutation({
-    onSuccess: () => {
-      // Scroll to bottom after sending message
+    onMutate: async ({ sessionId, content }) => {
+      await utils.chat.getSession.cancel({ sessionId });
+      await utils.chat.getSessions.cancel();
+
+      const previousSession = utils.chat.getSession.getData({ sessionId });
+      const previousSessionsList = utils.chat.getSessions.getData({ limit: 8 });
+
+      const optimisticMessage = {
+        id: `temp-${crypto.randomUUID()}`,
+        sessionId,
+        content,
+        role: "USER" as const,
+        createdAt: new Date(),
+      };
+
+      if (previousSession) {
+        utils.chat.getSession.setData({ sessionId }, {
+          ...previousSession,
+          // Ensure messages exist
+          messages: [...(previousSession.messages ?? []), optimisticMessage],
+          // Touch updatedAt locally for better UX
+          updatedAt: new Date(),
+        } as typeof previousSession);
+      }
+
+      if (previousSessionsList) {
+        const now = new Date();
+        const updated = {
+          ...previousSessionsList,
+          sessions: previousSessionsList.sessions.map((s) =>
+            s.id === sessionId ? { ...s, updatedAt: now } : s,
+          ),
+        };
+        utils.chat.getSessions.setData({ limit: 8 }, updated);
+      }
+
+      // Scroll to bottom immediately
+      setTimeout(() => {
+        scrollToBottom();
+      }, 0);
+
+      return { previousSession, previousSessionsList };
+    },
+    onError: (_err, variables, context) => {
+      if (context?.previousSession) {
+        utils.chat.getSession.setData(
+          { sessionId: variables.sessionId },
+          context.previousSession,
+        );
+      }
+      if (context?.previousSessionsList) {
+        utils.chat.getSessions.setData(
+          { limit: 8 },
+          context.previousSessionsList,
+        );
+      }
+    },
+    onSettled: (_data, _error, variables) => {
+      utils.chat.getSession.invalidate({ sessionId: variables.sessionId });
+      utils.chat.getSessions.invalidate();
       setTimeout(() => {
         scrollToBottom();
       }, 100);
     },
   });
 
-  const utils = api.useContext();
+  const utils = api.useUtils();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
