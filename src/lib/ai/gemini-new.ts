@@ -1,6 +1,7 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenAI } from "@google/genai";
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+// Ensure the API key is available in the environment variables.
+const genAI = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
 
 const CAREER_COUNSELOR_PROMPT = `You are an experienced and empathetic career counselor with over 15 years of experience helping people navigate their career paths. Your role is to:
 
@@ -28,34 +29,38 @@ export async function getChatResponse(
   messages: { role: string; content: string }[],
 ) {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
-    // Format messages for Gemini
-    const chat = model.startChat({
-      history: [
-        {
-          role: "user",
-          parts: [{ text: CAREER_COUNSELOR_PROMPT }],
-        },
-        {
-          role: "model",
-          parts: [
-            {
-              text: "Hello! I'm here to help you with your career journey. I'm an experienced career counselor, and I'm excited to work with you to explore your goals, identify opportunities, and create a path forward. What would you like to discuss about your career today?",
-            },
-          ],
-        },
-        ...messages.slice(0, -1).map((msg) => ({
-          role: msg.role === "USER" ? "user" : "model",
-          parts: [{ text: msg.content }],
-        })),
-      ],
+    // With the new SDK, the system prompt is passed during model initialization.
+    const response = genAI.chats.create({
+      model: "gemini-2.0-flash",
+      config: {
+        thinkingConfig: { thinkingBudget: 0 },
+        systemInstruction: CAREER_COUNSELOR_PROMPT,
+      },
+      systemInstruction: CAREER_COUNSELOR_PROMPT,
     });
 
-    // Get the last message (current user input)
-    const lastMessage = messages[messages.length - 1];
-    const result = await chat.sendMessage(lastMessage.content);
-    const response = await result.response;
+    // The new `generateContent` method is stateless and takes the entire conversation history.
+    // We map the incoming messages to the format expected by the new SDK.
+    const history = [
+      // We manually add the initial model greeting to set the context, as in the original code.
+      {
+        role: "model",
+        parts: [
+          {
+            text: "Hello! I'm here to help you with your career journey. I'm an experienced career counselor, and I'm excited to work with you to explore your goals, identify opportunities, and create a path forward. What would you like to discuss about your career today?",
+          },
+        ],
+      },
+      // Map the rest of the conversation history.
+      ...messages.map((msg) => ({
+        role: msg.role === "USER" ? "user" : "model",
+        parts: [{ text: msg.content }],
+      })),
+    ];
+
+    // The `generateContent` function takes the full history.
+    const result = await model.generateContent({ contents: history });
+    // const response = await result.response;
 
     return response.text();
   } catch (error) {
@@ -66,8 +71,13 @@ export async function getChatResponse(
   }
 }
 
+/**
+ * Generates a short title for the chat session based on the first user message.
+ * @param {string} firstMessage - The content of the first message from the user.
+ * @returns {string} A formatted title.
+ */
 export function generateSessionTitle(firstMessage: string): string {
-  // Generate a title based on the first user message
+  // This function does not use the SDK, so it remains unchanged.
   const words = firstMessage.split(" ").slice(0, 6);
   let title = words.join(" ");
 
