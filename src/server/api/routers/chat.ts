@@ -1,7 +1,13 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { getChatResponse, generateSessionTitle } from "@/lib/ai/gemini";
+import {
+  getChatResponse,
+  generateSessionTitle,
+  getChatResponseStream,
+} from "@/lib/ai/gemini";
 import { TRPCError } from "@trpc/server";
+import { observable } from "@trpc/server/observable";
+
 export const chatRouter = createTRPCRouter({
   // Create a new chat session
   createSession: protectedProcedure
@@ -237,5 +243,128 @@ export const chatRouter = createTRPCRouter({
       });
 
       return { success: true };
+    }),
+
+  // New streaming subscription procedure
+  streamResponse: protectedProcedure
+    .input(
+      z.object({
+        sessionId: z.string(),
+        content: z.string().min(1).max(2000),
+      }),
+    )
+    .subscription(async ({ ctx, input }) => {
+      return observable<string>((emit) => {
+        const processStream = async () => {
+          try {
+            // Verify session belongs to user
+            const session = await ctx.prisma.chatSession.findFirst({
+              where: {
+                id: input.sessionId,
+                userId: ctx.session.user.id,
+              },
+              include: {
+                messages: {
+                  orderBy: {
+                    createdAt: "asc",
+                  },
+                },
+              },
+            });
+
+            if (!session) {
+              emit.error(
+                new TRPCError({
+                  code: "NOT_FOUND",
+                  message: "Session not found",
+                }),
+              );
+              return;
+            }
+
+            // Save user message first
+            const userMessage = await ctx.prisma.message.create({
+              data: {
+                sessionId: input.sessionId,
+                content: input.content,
+                role: "USER",
+              },
+            });
+
+            // Build message history for AI
+            const allMessages = [...session.messages, userMessage];
+            const messageHistory = allMessages.map((msg) => ({
+              role: msg.role,
+              content: msg.content,
+            }));
+
+            // Start streaming response
+            const stream = getChatResponseStream(messageHistory);
+
+            let fullResponse = "";
+
+            stream.subscribe({
+              next: (chunk) => {
+                fullResponse += chunk;
+                emit.next(chunk);
+              },
+              error: (error) => {
+                emit.error(error);
+              },
+              complete: async () => {
+                try {
+                  // Save the complete assistant message
+                  const assistantMessage = await ctx.prisma.message.create({
+                    data: {
+                      sessionId: input.sessionId,
+                      content: fullResponse,
+                      role: "ASSISTANT",
+                    },
+                  });
+
+                  // Update session title if it's the first message
+                  if (
+                    session.messages.length === 0 &&
+                    session.title === "New Chat"
+                  ) {
+                    const newTitle = generateSessionTitle(input.content);
+                    await ctx.prisma.chatSession.update({
+                      where: { id: input.sessionId },
+                      data: {
+                        title: newTitle,
+                        updatedAt: new Date(),
+                      },
+                    });
+                  } else {
+                    // Just update the timestamp
+                    await ctx.prisma.chatSession.update({
+                      where: { id: input.sessionId },
+                      data: { updatedAt: new Date() },
+                    });
+                  }
+
+                  emit.complete();
+                } catch (error) {
+                  emit.error(
+                    new TRPCError({
+                      code: "INTERNAL_SERVER_ERROR",
+                      message: "Failed to save assistant message",
+                    }),
+                  );
+                }
+              },
+            });
+          } catch (error) {
+            emit.error(
+              new TRPCError({
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Failed to process stream",
+              }),
+            );
+          }
+        };
+
+        processStream();
+      });
     }),
 });

@@ -42,7 +42,11 @@ export function MessageInput({
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Type your message... (Press Enter to send, Shift+Enter for new line)"
+        placeholder={
+          isLoading
+            ? "AI is thinking..."
+            : "Type your message... (Press Enter to send, Shift+Enter for new line)"
+        }
         className="min-h-[60px] resize-none flex-1"
         disabled={disabled || isLoading}
         maxLength={2000}

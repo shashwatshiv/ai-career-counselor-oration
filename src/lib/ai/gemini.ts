@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { Observable } from "rxjs";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -24,13 +25,13 @@ Guidelines:
 
 Remember to maintain a warm, professional tone and focus on empowering the person to make informed career decisions.`;
 
+// Keep the existing function for non-streaming operations
 export async function getChatResponse(
   messages: { role: string; content: string }[],
 ) {
   try {
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-    // Format messages for Gemini
     const chat = model.startChat({
       history: [
         {
@@ -52,7 +53,6 @@ export async function getChatResponse(
       ],
     });
 
-    // Get the last message (current user input)
     const lastMessage = messages[messages.length - 1];
     const result = await chat.sendMessage(lastMessage.content);
     const response = await result.response;
@@ -66,8 +66,66 @@ export async function getChatResponse(
   }
 }
 
+// New streaming function that returns an Observable
+export function getChatResponseStream(
+  messages: { role: string; content: string }[],
+): Observable<string> {
+  return new Observable((subscriber) => {
+    const processStream = async () => {
+      try {
+        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+        const chat = model.startChat({
+          history: [
+            {
+              role: "user",
+              parts: [{ text: CAREER_COUNSELOR_PROMPT }],
+            },
+            {
+              role: "model",
+              parts: [
+                {
+                  text: "Hello! I'm here to help you with your career journey. I'm an experienced career counselor, and I'm excited to work with you to explore your goals, identify opportunities, and create a path forward. What would you like to discuss about your career today?",
+                },
+              ],
+            },
+            ...messages.slice(0, -1).map((msg) => ({
+              role: msg.role === "USER" ? "user" : "model",
+              parts: [{ text: msg.content }],
+            })),
+          ],
+        });
+
+        const lastMessage = messages[messages.length - 1];
+        const result = await chat.sendMessageStream(lastMessage.content);
+
+        let fullText = "";
+
+        for await (const chunk of result.stream) {
+          const chunkText = chunk.text();
+          if (chunkText) {
+            fullText += chunkText;
+            subscriber.next(chunkText);
+          }
+        }
+
+        subscriber.complete();
+        return fullText;
+      } catch (error) {
+        console.error("Gemini AI Streaming Error:", error);
+        subscriber.error(
+          new Error(
+            "Sorry, I'm having trouble connecting to my knowledge base. Please try again in a moment.",
+          ),
+        );
+      }
+    };
+
+    processStream();
+  });
+}
+
 export function generateSessionTitle(firstMessage: string): string {
-  // Generate a title based on the first user message
   const words = firstMessage.split(" ").slice(0, 6);
   let title = words.join(" ");
 

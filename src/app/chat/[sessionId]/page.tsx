@@ -9,7 +9,7 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import { Loader2, AlertCircle, RefreshCw, StopCircle } from "lucide-react";
 import { useSession } from "next-auth/react";
 
 export default function ChatPage() {
@@ -17,6 +17,12 @@ export default function ChatPage() {
   const router = useRouter();
   const { data: session } = useSession();
   const [isAtBottom, setIsAtBottom] = useState(true);
+  const [isStreaming, setIsStreaming] = useState(false);
+  const [streamingMessage, setStreamingMessage] = useState("");
+  const [subscriptionInput, setSubscriptionInput] = useState<{
+    sessionId: string;
+    content: string;
+  } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -35,72 +41,38 @@ export default function ChatPage() {
     },
   );
 
-  const sendMessageMutation = api.chat.sendMessage.useMutation({
-    onMutate: async ({ sessionId, content }) => {
-      await utils.chat.getSession.cancel({ sessionId });
-      await utils.chat.getSessions.cancel();
-
-      const previousSession = utils.chat.getSession.getData({ sessionId });
-      const previousSessionsList = utils.chat.getSessions.getData({ limit: 8 });
-
-      const optimisticMessage = {
-        id: `temp-${crypto.randomUUID()}`,
-        sessionId,
-        content,
-        role: "USER" as const,
-        createdAt: new Date(),
-      };
-
-      if (previousSession) {
-        utils.chat.getSession.setData({ sessionId }, {
-          ...previousSession,
-          // Ensure messages exist
-          messages: [...(previousSession.messages ?? []), optimisticMessage],
-          // Touch updatedAt locally for better UX
-          updatedAt: new Date(),
-        } as typeof previousSession);
-      }
-
-      if (previousSessionsList) {
-        const now = new Date();
-        const updated = {
-          ...previousSessionsList,
-          sessions: previousSessionsList.sessions.map((s) =>
-            s.id === sessionId ? { ...s, updatedAt: now } : s,
-          ),
-        };
-        utils.chat.getSessions.setData({ limit: 8 }, updated);
-      }
-
-      // Scroll to bottom immediately
-      setTimeout(() => {
-        scrollToBottom();
-      }, 0);
-
-      return { previousSession, previousSessionsList };
+  // Move useSubscription to the top level of the component
+  const subscription = api.chat.streamResponse.useSubscription(
+    subscriptionInput!,
+    {
+      enabled: !!subscriptionInput,
+      onStarted: () => {
+        console.log("Subscription started");
+        setIsStreaming(true);
+        setStreamingMessage("");
+      },
+      onData: (chunk: string) => {
+        setStreamingMessage((prev) => prev + chunk);
+        // Scroll to bottom on each chunk
+        setTimeout(() => scrollToBottom(), 50);
+      },
+      onError: (error) => {
+        console.error("Streaming error:", error);
+        setIsStreaming(false);
+        setStreamingMessage("");
+        setSubscriptionInput(null);
+        // Show error to user
+      },
+      onConnectionStateChange: (state) => {
+        console.log("Connection state:", state);
+        if (state === "error") {
+          setIsStreaming(false);
+          setStreamingMessage("");
+          setSubscriptionInput(null);
+        }
+      },
     },
-    onError: (_err, variables, context) => {
-      if (context?.previousSession) {
-        utils.chat.getSession.setData(
-          { sessionId: variables.sessionId },
-          context.previousSession,
-        );
-      }
-      if (context?.previousSessionsList) {
-        utils.chat.getSessions.setData(
-          { limit: 8 },
-          context.previousSessionsList,
-        );
-      }
-    },
-    onSettled: (_data, _error, variables) => {
-      utils.chat.getSession.invalidate({ sessionId: variables.sessionId });
-      utils.chat.getSessions.invalidate();
-      setTimeout(() => {
-        scrollToBottom();
-      }, 100);
-    },
-  });
+  );
 
   const utils = api.useUtils();
 
@@ -121,24 +93,43 @@ export default function ChatPage() {
     if (isAtBottom) {
       scrollToBottom();
     }
-  }, [chatSession?.messages, isAtBottom]);
+  }, [chatSession?.messages, isAtBottom, streamingMessage]);
 
   const handleSendMessage = async (content: string) => {
+    if (isStreaming) return;
+
     try {
-      await sendMessageMutation.mutateAsync(
-        { sessionId, content },
-        {
-          onSuccess: () => {
-            // Invalidate and refetch the session to get updated messages
-            utils.chat.getSession.invalidate({ sessionId });
-            utils.chat.getSessions.invalidate();
-          },
-        },
-      );
+      // Set the subscription input to start the subscription
+      setSubscriptionInput({ sessionId, content });
     } catch (error) {
-      console.error("Failed to send message:", error);
+      console.error("Failed to start streaming:", error);
+      setIsStreaming(false);
+      setStreamingMessage("");
     }
   };
+
+  const stopStreaming = () => {
+    // Reset the subscription by clearing the input
+    setSubscriptionInput(null);
+    setIsStreaming(false);
+    setStreamingMessage("");
+  };
+
+  // Handle subscription completion
+  useEffect(() => {
+    if (subscription.status === "pending" && !isStreaming) {
+      setIsStreaming(true);
+    }
+
+    if (subscription.status === "idle" && isStreaming) {
+      setIsStreaming(false);
+      setStreamingMessage("");
+      // Invalidate queries to refresh the UI
+      utils.chat.getSession.invalidate({ sessionId });
+      utils.chat.getSessions.invalidate();
+      scrollToBottom();
+    }
+  }, [subscription.status, isStreaming, sessionId, utils]);
 
   if (!session) {
     router.push("/auth/signin");
@@ -201,7 +192,7 @@ export default function ChatPage() {
           onScroll={handleScroll}
           className="flex-1 overflow-y-auto p-4 space-y-4"
         >
-          {chatSession?.messages?.length === 0 ? (
+          {chatSession?.messages?.length === 0 && !isStreaming ? (
             <div className="flex-1 flex items-center justify-center text-center">
               <div className="max-w-md">
                 <div className="text-4xl mb-4">👋</div>
@@ -246,15 +237,20 @@ export default function ChatPage() {
                   userName={session?.user?.name}
                 />
               ))}
-              {sendMessageMutation.isPending && (
+
+              {/* Streaming message display */}
+              {isStreaming && streamingMessage && (
                 <div className="flex items-start gap-3">
                   <div className="h-8 w-8 bg-blue-500 rounded-full flex items-center justify-center">
                     <Loader2 className="h-4 w-4 text-white animate-spin" />
                   </div>
-                  <Card className="bg-muted p-3">
-                    <p className="text-sm text-muted-foreground">
-                      AI is thinking...
-                    </p>
+                  <Card className="bg-muted p-3 max-w-[70%]">
+                    <div className="space-y-2">
+                      <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                        {streamingMessage}
+                        <span className="animate-pulse">▋</span>
+                      </div>
+                    </div>
                   </Card>
                 </div>
               )}
@@ -279,19 +275,22 @@ export default function ChatPage() {
         {/* Message input */}
         <MessageInput
           onSendMessage={handleSendMessage}
-          isLoading={sendMessageMutation.isPending}
-          disabled={!chatSession}
+          isLoading={isStreaming}
+          disabled={!chatSession || isStreaming}
         />
 
-        {/* Error display */}
-        {sendMessageMutation.error && (
-          <div className="p-4 border-t">
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4" />
-              <AlertDescription>
-                {sendMessageMutation.error.message || "Failed to send message"}
-              </AlertDescription>
-            </Alert>
+        {/* Stop streaming button */}
+        {isStreaming && (
+          <div className="p-4 border-t bg-background">
+            <Button
+              onClick={stopStreaming}
+              variant="outline"
+              size="sm"
+              className="w-full"
+            >
+              <StopCircle className="h-4 w-4 mr-2" />
+              Stop Generating
+            </Button>
           </div>
         )}
       </div>
