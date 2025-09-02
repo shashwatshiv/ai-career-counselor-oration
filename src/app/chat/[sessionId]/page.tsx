@@ -56,14 +56,14 @@ export default function ChatPage() {
         // Scroll to bottom on each chunk
         setTimeout(() => scrollToBottom(), 50);
       },
-      onError: (error) => {
+      onError: (error: string) => {
         console.error("Streaming error:", error);
         setIsStreaming(false);
         setStreamingMessage("");
         setSubscriptionInput(null);
         // Show error to user
       },
-      onConnectionStateChange: (state) => {
+      onConnectionStateChange: (state: any) => {
         console.log("Connection state:", state);
         if (state === "error") {
           setIsStreaming(false);
@@ -113,6 +113,10 @@ export default function ChatPage() {
     setSubscriptionInput(null);
     setIsStreaming(false);
     setStreamingMessage("");
+    // Also reset the subscription if it exists
+    if (subscription) {
+      subscription.reset();
+    }
   };
 
   // Handle subscription completion
@@ -130,6 +134,15 @@ export default function ChatPage() {
       scrollToBottom();
     }
   }, [subscription.status, isStreaming, sessionId, utils]);
+
+  // Cleanup subscription on unmount
+  useEffect(() => {
+    return () => {
+      if (subscription) {
+        subscription.reset();
+      }
+    };
+  }, [subscription]);
 
   if (!session) {
     router.push("/auth/signin");

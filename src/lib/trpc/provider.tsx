@@ -1,7 +1,12 @@
 "use client";
 
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { httpBatchLink, httpSubscriptionLink, splitLink } from "@trpc/client";
+import {
+  httpBatchLink,
+  httpSubscriptionLink,
+  splitLink,
+  createTRPCClient,
+} from "@trpc/client";
 import { useState } from "react";
 import { api } from "./client";
 import superjson from "superjson";
