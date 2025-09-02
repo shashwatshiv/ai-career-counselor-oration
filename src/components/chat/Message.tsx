@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { format } from "date-fns";
 import { type Message } from "../../generated/prisma";
 import { Bot, User } from "lucide-react";
+import ReactMarkdown from "react-markdown";
 
 interface MessageProps {
   message: Message;
@@ -14,6 +15,7 @@ interface MessageProps {
 
 export function ChatMessage({ message, userImage, userName }: MessageProps) {
   const isUser = message.role === "USER";
+  const isAI = message.role === "ASSISTANT";
 
   return (
     <div
@@ -39,13 +41,13 @@ export function ChatMessage({ message, userImage, userName }: MessageProps) {
       </Avatar>
 
       <Card
-        className={`max-w-[80%] p-3 ${
-          isUser ? "bg-blue-500 text-white ml-auto" : "bg-muted"
+        className={`max-w-[70%] p-3 ${
+          isUser ? "bg-blue-500 text-white " : "bg-muted"
         }`}
       >
         <div className="space-y-2">
-          <div className="text-sm leading-relaxed whitespace-pre-wrap">
-            {message.content}
+          <div className="text-sm leading-relaxed whitespace-pre-wrap ">
+            <ReactMarkdown>{message.content}</ReactMarkdown>
           </div>
           <div
             className={`text-xs opacity-70 ${
