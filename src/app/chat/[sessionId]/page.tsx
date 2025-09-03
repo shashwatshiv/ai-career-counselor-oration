@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { api } from "@/lib/trpc/client";
+import { useTRPC } from "@/lib/trpc/client";
 import { ChatMessage } from "@/components/chat/Message";
 import { MessageInput } from "@/components/chat/MessageInput";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -12,7 +12,12 @@ import { Button } from "@/components/ui/button";
 import { Loader2, AlertCircle, RefreshCw, StopCircle } from "lucide-react";
 import { useSession } from "next-auth/react";
 
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useSubscription } from "@trpc/tanstack-react-query";
+
 export default function ChatPage() {
+  const api = useTRPC();
+  const queryClient = useQueryClient();
   const params = useParams();
   const router = useRouter();
   const { data: session } = useSession();
@@ -33,18 +38,19 @@ export default function ChatPage() {
     isLoading,
     error,
     refetch,
-  } = api.chat.getSession.useQuery(
-    { sessionId },
-    {
-      enabled: !!sessionId,
-      retry: 1,
-    },
+  } = useQuery(
+    api.chat.getSession.queryOptions(
+      { sessionId },
+      {
+        enabled: !!sessionId,
+        retry: 1,
+      },
+    ),
   );
 
   // Move useSubscription to the top level of the component
-  const subscription = api.chat.streamResponse.useSubscription(
-    subscriptionInput!,
-    {
+  const subscription = useSubscription(
+    api.chat.streamResponse.subscriptionOptions(subscriptionInput!, {
       enabled: !!subscriptionInput,
       onStarted: () => {
         console.log("Subscription started");
@@ -56,7 +62,7 @@ export default function ChatPage() {
         // Scroll to bottom on each chunk
         setTimeout(() => scrollToBottom(), 50);
       },
-      onError: (error: string) => {
+      onError: (error) => {
         console.error("Streaming error:", error);
         setIsStreaming(false);
         setStreamingMessage("");
@@ -71,11 +77,8 @@ export default function ChatPage() {
           setSubscriptionInput(null);
         }
       },
-    },
+    }),
   );
-
-  const utils = api.useUtils();
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -129,20 +132,22 @@ export default function ChatPage() {
       setIsStreaming(false);
       setStreamingMessage("");
       // Invalidate queries to refresh the UI
-      utils.chat.getSession.invalidate({ sessionId });
-      utils.chat.getSessions.invalidate();
+      queryClient.invalidateQueries(
+        api.chat.getSession.queryFilter({ sessionId }),
+      );
+      queryClient.invalidateQueries(api.chat.getSessions.queryFilter());
       scrollToBottom();
     }
-  }, [subscription.status, isStreaming, sessionId, utils]);
+  }, [subscription.status, isStreaming, sessionId, queryClient]);
 
   // Cleanup subscription on unmount
-  useEffect(() => {
-    return () => {
-      if (subscription) {
-        subscription.reset();
-      }
-    };
-  }, [subscription]);
+  // useEffect(() => {
+  //   return () => {
+  //     if (subscription) {
+  //       subscription.reset();
+  //     }
+  //   };
+  // }, [subscription]);
 
   if (!session) {
     router.push("/auth/signin");

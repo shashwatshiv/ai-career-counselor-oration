@@ -1,5 +1,4 @@
 "use client";
-
 import { useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -12,25 +11,28 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { api } from "@/lib/trpc/client";
+import { useTRPC } from "@/lib/trpc/client";
 import { MessageSquare, Plus, TrendingUp, Users, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
+import { useQuery, useMutation } from "@tanstack/react-query";
 
 export default function HomePage() {
+  const api = useTRPC();
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  const { data: recentSessions } = api.chat.getSessions.useQuery(
-    { limit: 3 },
-    { enabled: !!session },
+  const { data: recentSessions } = useQuery(
+    api.chat.getSessions.queryOptions({ limit: 3 }, { enabled: !!session }),
   );
 
-  const createSessionMutation = api.chat.createSession.useMutation({
-    onSuccess: (session) => {
-      router.push(`/chat/${session.id}`);
-    },
-  });
+  const createSessionMutation = useMutation(
+    api.chat.createSession.mutationOptions({
+      onSuccess: (session) => {
+        router.push(`/chat/${session.id}`);
+      },
+    }),
+  );
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/auth/signin");
@@ -122,9 +124,6 @@ export default function HomePage() {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-2xl font-semibold">Recent Conversations</h2>
-                <Link href="/chat">
-                  <Button variant="outline">View All</Button>
-                </Link>
               </div>
 
               <div className="grid gap-4">

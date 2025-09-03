@@ -1,9 +1,7 @@
 "use client";
-
-import { api } from "@/lib/trpc/client";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
+import { useTRPC } from "@/lib/trpc/client";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -23,42 +21,51 @@ import { format } from "date-fns";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
 
 interface SessionListProps {
   currentSessionId?: string;
 }
 
 export function SessionList({ currentSessionId }: SessionListProps) {
+  const api = useTRPC();
+  const queryClient = useQueryClient();
   const [editingSession, setEditingSession] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const router = useRouter();
 
-  const { data: sessionsData, isLoading } = api.chat.getSessions.useQuery({
-    limit: 8,
-  });
+  const { data: sessionsData, isLoading } = useQuery(
+    api.chat.getSessions.queryOptions({
+      limit: 8,
+    }),
+  );
 
-  const createSessionMutation = api.chat.createSession.useMutation({
-    onSuccess: (session) => {
-      router.push(`/chat/${session.id}`);
-    },
-  });
+  const createSessionMutation = useMutation(
+    api.chat.createSession.mutationOptions({
+      onSuccess: (session) => {
+        router.push(`/chat/${session.id}`);
+      },
+    }),
+  );
 
-  const updateTitleMutation = api.chat.updateSessionTitle.useMutation({
-    onSuccess: () => {
-      setEditingSession(null);
-      setNewTitle("");
-    },
-  });
+  const updateTitleMutation = useMutation(
+    api.chat.updateSessionTitle.mutationOptions({
+      onSuccess: () => {
+        setEditingSession(null);
+        setNewTitle("");
+      },
+    }),
+  );
 
-  const deleteSessionMutation = api.chat.deleteSession.useMutation({
-    onSuccess: () => {
-      if (currentSessionId && editingSession === currentSessionId) {
-        router.push("/");
-      }
-    },
-  });
-
-  const utils = api.useUtils();
+  const deleteSessionMutation = useMutation(
+    api.chat.deleteSession.mutationOptions({
+      onSuccess: () => {
+        if (currentSessionId && editingSession === currentSessionId) {
+          router.push("/");
+        }
+      },
+    }),
+  );
 
   const handleCreateSession = () => {
     createSessionMutation.mutate({});
@@ -70,7 +77,7 @@ export function SessionList({ currentSessionId }: SessionListProps) {
         { sessionId, title: newTitle.trim() },
         {
           onSuccess: () => {
-            utils.chat.getSessions.invalidate();
+            queryClient.invalidateQueries(api.chat.getSessions.queryFilter());
           },
         },
       );
@@ -82,7 +89,7 @@ export function SessionList({ currentSessionId }: SessionListProps) {
       { sessionId },
       {
         onSuccess: () => {
-          utils.chat.getSessions.invalidate();
+          queryClient.invalidateQueries(api.chat.getSessions.queryFilter());
         },
       },
     );

@@ -1,6 +1,6 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { TRPCProvider } from "@/lib/trpc/provider";
+import { ProviderApp } from "@/lib/trpc/provider";
 import { AuthSessionProvider } from "@/components/providers/SessionProvider";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
@@ -23,7 +23,7 @@ export default async function RootLayout({
     <html lang="en">
       <body className={inter.className}>
         <AuthSessionProvider session={session}>
-          <TRPCProvider>{children}</TRPCProvider>
+          <ProviderApp>{children}</ProviderApp>
         </AuthSessionProvider>
       </body>
     </html>

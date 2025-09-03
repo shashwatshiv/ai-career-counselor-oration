@@ -7,14 +7,15 @@ import {
   splitLink,
   createTRPCClient,
 } from "@trpc/client";
+import { type AppRouter } from "@/server/api/root";
 import { useState } from "react";
-import { api } from "./client";
 import superjson from "superjson";
+import { TRPCProvider } from "@/lib/trpc/client";
 
-export function TRPCProvider({ children }: { children: React.ReactNode }) {
+export function ProviderApp({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
   const [trpcClient] = useState(() =>
-    api.createClient({
+    createTRPCClient<AppRouter>({
       links: [
         splitLink({
           // Use httpSubscriptionLink for subscriptions
@@ -34,8 +35,15 @@ export function TRPCProvider({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <api.Provider client={trpcClient} queryClient={queryClient}>
-      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-    </api.Provider>
+    <QueryClientProvider client={queryClient}>
+      <TRPCProvider trpcClient={trpcClient} queryClient={queryClient}>
+        {children}
+      </TRPCProvider>
+    </QueryClientProvider>
   );
+  // return (
+  //   <api.Provider client={trpcClient} queryClient={queryClient}>
+  //     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+  //   </api.Provider>
+  // );
 }
