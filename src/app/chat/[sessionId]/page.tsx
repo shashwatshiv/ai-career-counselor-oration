@@ -1,4 +1,6 @@
 "use client";
+
+import { useSession } from "next-auth/react";
 import ReactMarkdown from "react-markdown";
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -9,15 +11,10 @@ import { MainLayout } from "@/components/layout/MainLayout";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Loader2, AlertCircle, RefreshCw, StopCircle } from "lucide-react";
-import { useSession } from "next-auth/react";
-
-import {
-  QueryClientContext,
-  useQuery,
-  useQueryClient,
-} from "@tanstack/react-query";
 import { useSubscription } from "@trpc/tanstack-react-query";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 export default function ChatPage() {
   const api = useTRPC();
@@ -32,6 +29,7 @@ export default function ChatPage() {
     sessionId: string;
     content: string;
   } | null>(null);
+  const [zero, setZero] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -64,7 +62,7 @@ export default function ChatPage() {
       onData: (chunk: string) => {
         setStreamingMessage((prev) => prev + chunk);
         // Scroll to bottom on each chunk
-        // setTimeout(() => scrollToBottom(), 50);
+        setTimeout(() => scrollToBottom(), 50);
       },
       onError: (error) => {
         console.error("Streaming error:", error);
@@ -80,7 +78,8 @@ export default function ChatPage() {
           setStreamingMessage("");
           setSubscriptionInput(null);
         }
-        if (state.state === "connecting" || "pending") {
+        if (state.state === "connecting") {
+          setTimeout(() => scrollToBottom(), 10);
         }
 
         if (state.state === "idle" && isStreaming) {
@@ -90,7 +89,7 @@ export default function ChatPage() {
             api.chat.getSession.queryFilter({ sessionId }),
           );
           queryClient.invalidateQueries(api.chat.getSessions.queryFilter());
-          scrollToBottom();
+          // scrollToBottom();
         }
       },
     }),
@@ -103,7 +102,7 @@ export default function ChatPage() {
 
     const { scrollTop, scrollHeight, clientHeight } =
       messagesContainerRef.current;
-    const atBottom = scrollTop + clientHeight >= scrollHeight - 10;
+    const atBottom = scrollTop + clientHeight >= scrollHeight;
     setIsAtBottom(atBottom);
   };
 
@@ -135,6 +134,10 @@ export default function ChatPage() {
     if (subscription) {
       subscription.reset();
     }
+    // Refresh messages
+    queryClient.invalidateQueries(
+      api.chat.getSession.queryFilter({ sessionId }),
+    );
   };
 
   // Handle subscription completion
@@ -206,7 +209,7 @@ export default function ChatPage() {
           onScroll={handleScroll}
           className="flex-1 overflow-y-auto p-4 space-y-4"
         >
-          {chatSession?.messages?.length === 0 && !isStreaming ? (
+          {chatSession?.messages?.length === 0 && !subscription.status ? (
             <div className="flex-1 flex items-center justify-center text-center">
               <div className="max-w-md">
                 <div className="text-4xl mb-4">👋</div>
@@ -251,9 +254,20 @@ export default function ChatPage() {
                   userName={session?.user?.name}
                 />
               ))}
+
               {(subscription.status == "connecting" ||
                 subscription.status == "pending") && (
                 <div className="flex flex-row-reverse items-start gap-3">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage src={session.user?.image || undefined} />
+                  </Avatar>
+                  <Card className="bg-blue-500 p-3 text-white text-sm">
+                    <p>{subscriptionInput?.content}</p>
+                  </Card>
+                </div>
+              )}
+              {streamingMessage && (
+                <div className="flex  items-start gap-3">
                   <div className="h-8 w-8 bg-blue-500 rounded-full flex items-center justify-center">
                     <Loader2 className="h-4 w-4 text-white animate-spin" />
                   </div>

@@ -25,8 +25,8 @@ export function MessageInput({
     if (message.trim() && !isLoading) {
       onSendMessage(message.trim());
       setMessage("");
-    } else {
-      stopStreaming;
+    } else if (isLoading && stopStreaming) {
+      stopStreaming();
     }
   };
 
