@@ -1,5 +1,5 @@
 "use client";
-
+import ReactMarkdown from "react-markdown";
 import { useEffect, useRef, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useTRPC } from "@/lib/trpc/client";
@@ -12,7 +12,11 @@ import { Button } from "@/components/ui/button";
 import { Loader2, AlertCircle, RefreshCw, StopCircle } from "lucide-react";
 import { useSession } from "next-auth/react";
 
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  QueryClientContext,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useSubscription } from "@trpc/tanstack-react-query";
 
 export default function ChatPage() {
@@ -53,14 +57,14 @@ export default function ChatPage() {
     api.chat.streamResponse.subscriptionOptions(subscriptionInput!, {
       enabled: !!subscriptionInput,
       onStarted: () => {
-        console.log("Subscription started");
         setIsStreaming(true);
+        console.log(subscriptionInput?.content);
         setStreamingMessage("");
       },
       onData: (chunk: string) => {
         setStreamingMessage((prev) => prev + chunk);
         // Scroll to bottom on each chunk
-        setTimeout(() => scrollToBottom(), 50);
+        // setTimeout(() => scrollToBottom(), 50);
       },
       onError: (error) => {
         console.error("Streaming error:", error);
@@ -69,12 +73,24 @@ export default function ChatPage() {
         setSubscriptionInput(null);
         // Show error to user
       },
-      onConnectionStateChange: (state: any) => {
+      onConnectionStateChange: (state) => {
         console.log("Connection state:", state);
-        if (state === "error") {
+        if (state.error) {
           setIsStreaming(false);
           setStreamingMessage("");
           setSubscriptionInput(null);
+        }
+        if (state.state === "connecting" || "pending") {
+        }
+
+        if (state.state === "idle" && isStreaming) {
+          setIsStreaming(false);
+          setStreamingMessage("");
+          queryClient.invalidateQueries(
+            api.chat.getSession.queryFilter({ sessionId }),
+          );
+          queryClient.invalidateQueries(api.chat.getSessions.queryFilter());
+          scrollToBottom();
         }
       },
     }),
@@ -82,7 +98,6 @@ export default function ChatPage() {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
-
   const handleScroll = () => {
     if (!messagesContainerRef.current) return;
 
@@ -115,7 +130,7 @@ export default function ChatPage() {
     // Reset the subscription by clearing the input
     setSubscriptionInput(null);
     setIsStreaming(false);
-    setStreamingMessage("");
+    // setStreamingMessage("");
     // Also reset the subscription if it exists
     if (subscription) {
       subscription.reset();
@@ -123,31 +138,12 @@ export default function ChatPage() {
   };
 
   // Handle subscription completion
-  useEffect(() => {
-    if (subscription.status === "pending" && !isStreaming) {
-      setIsStreaming(true);
-    }
-
-    if (subscription.status === "idle" && isStreaming) {
-      setIsStreaming(false);
-      setStreamingMessage("");
-      // Invalidate queries to refresh the UI
-      queryClient.invalidateQueries(
-        api.chat.getSession.queryFilter({ sessionId }),
-      );
-      queryClient.invalidateQueries(api.chat.getSessions.queryFilter());
-      scrollToBottom();
-    }
-  }, [subscription.status, isStreaming, sessionId, queryClient]);
-
-  // Cleanup subscription on unmount
   // useEffect(() => {
-  //   return () => {
-  //     if (subscription) {
-  //       subscription.reset();
-  //     }
-  //   };
-  // }, [subscription]);
+  //   if (subscription.status === "pending" && !isStreaming) {
+  //     setIsStreaming(true);
+  //   }
+
+  // }, [subscription.status, isStreaming, sessionId, queryClient]);
 
   if (!session) {
     router.push("/auth/signin");
@@ -255,7 +251,19 @@ export default function ChatPage() {
                   userName={session?.user?.name}
                 />
               ))}
-
+              {(subscription.status == "connecting" ||
+                subscription.status == "pending") && (
+                <div className="flex flex-row-reverse items-start gap-3">
+                  <div className="h-8 w-8 bg-blue-500 rounded-full flex items-center justify-center">
+                    <Loader2 className="h-4 w-4 text-white animate-spin" />
+                  </div>
+                  <Card className="bg-muted p-3">
+                    <p className="text-sm text-muted-foreground">
+                      AI is thinking...
+                    </p>
+                  </Card>
+                </div>
+              )}
               {/* Streaming message display */}
               {isStreaming && streamingMessage && (
                 <div className="flex items-start gap-3">
@@ -265,7 +273,7 @@ export default function ChatPage() {
                   <Card className="bg-muted p-3 max-w-[70%]">
                     <div className="space-y-2">
                       <div className="text-sm leading-relaxed whitespace-pre-wrap">
-                        {streamingMessage}
+                        <ReactMarkdown>{streamingMessage}</ReactMarkdown>
                         <span className="animate-pulse">▋</span>
                       </div>
                     </div>
@@ -279,7 +287,7 @@ export default function ChatPage() {
 
         {/* Scroll to bottom button */}
         {!isAtBottom && (
-          <div className="fixed bottom-20 right-4 z-10">
+          <div className="fixed bottom-30 right-10 z-10">
             <Button
               onClick={scrollToBottom}
               size="icon"
@@ -295,22 +303,8 @@ export default function ChatPage() {
           onSendMessage={handleSendMessage}
           isLoading={isStreaming}
           disabled={!chatSession || isStreaming}
+          stopStreaming={stopStreaming}
         />
-
-        {/* Stop streaming button */}
-        {isStreaming && (
-          <div className="p-4 border-t bg-background">
-            <Button
-              onClick={stopStreaming}
-              variant="outline"
-              size="sm"
-              className="w-full"
-            >
-              <StopCircle className="h-4 w-4 mr-2" />
-              Stop Generating
-            </Button>
-          </div>
-        )}
       </div>
     </MainLayout>
   );

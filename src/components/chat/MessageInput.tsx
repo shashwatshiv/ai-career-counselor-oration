@@ -3,18 +3,20 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2 } from "lucide-react";
+import { Send, Loader2, StopCircle } from "lucide-react";
 
 interface MessageInputProps {
   onSendMessage: (content: string) => void;
   isLoading?: boolean;
   disabled?: boolean;
+  stopStreaming?: () => void;
 }
 
 export function MessageInput({
   onSendMessage,
   isLoading,
   disabled,
+  stopStreaming,
 }: MessageInputProps) {
   const [message, setMessage] = useState("");
 
@@ -23,6 +25,8 @@ export function MessageInput({
     if (message.trim() && !isLoading) {
       onSendMessage(message.trim());
       setMessage("");
+    } else {
+      stopStreaming;
     }
   };
 
@@ -43,9 +47,7 @@ export function MessageInput({
         onChange={(e) => setMessage(e.target.value)}
         onKeyDown={handleKeyDown}
         placeholder={
-          isLoading
-            ? "AI is thinking..."
-            : "Type your message... (Press Enter to send, Shift+Enter for new line)"
+          "Type your message... (Press Enter to send, Shift+Enter for new line)"
         }
         className="min-h-[60px] resize-none flex-1"
         disabled={disabled || isLoading}
@@ -53,14 +55,14 @@ export function MessageInput({
       />
       <Button
         type="submit"
-        disabled={!message.trim() || isLoading || disabled}
+        // disabled={!message.trim() || isLoading || disabled}
         size="icon"
         className="h-[60px] w-[60px]"
       >
         {isLoading ? (
-          <Loader2 className="h-4 w-4 animate-spin" />
+          <StopCircle className="size-5" />
         ) : (
-          <Send className="h-4 w-4" />
+          <Send className="size-5" />
         )}
       </Button>
     </form>
