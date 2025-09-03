@@ -2,6 +2,8 @@
 import { useTRPC } from "@/lib/trpc/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useSession } from "next-auth/react";
+
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -21,7 +23,12 @@ import { format } from "date-fns";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
+import {
+  useQuery,
+  useQueryClient,
+  useMutation,
+  useInfiniteQuery,
+} from "@tanstack/react-query";
 
 interface SessionListProps {
   currentSessionId?: string;
@@ -30,15 +37,34 @@ interface SessionListProps {
 export function SessionList({ currentSessionId }: SessionListProps) {
   const api = useTRPC();
   const queryClient = useQueryClient();
+  const { status } = useSession();
   const [editingSession, setEditingSession] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const router = useRouter();
 
-  const { data: sessionsData, isLoading } = useQuery(
-    api.chat.getSessions.queryOptions({
-      limit: 8,
-    }),
-  );
+  // const { data: sessionsData, isLoading } = useQuery(
+  //   api.chat.getSessions.queryOptions({
+  //     limit: 8,
+  //   }),
+  // );
+  const {
+    data,
+    isLoading,
+    error,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    ...api.chat.getSessions.infiniteQueryOptions(
+      { limit: 10 }, // Your query input
+      {
+        getNextPageParam: (lastPage) => lastPage.nextCursor,
+        // Optional: Configure initial page param if needed
+      },
+    ),
+  });
+
+  const allSessions = data?.pages.flatMap((page) => page.sessions) ?? [];
 
   const createSessionMutation = useMutation(
     api.chat.createSession.mutationOptions({
@@ -53,46 +79,38 @@ export function SessionList({ currentSessionId }: SessionListProps) {
       onSuccess: () => {
         setEditingSession(null);
         setNewTitle("");
+        queryClient.invalidateQueries(api.chat.getSessions.queryFilter());
       },
     }),
   );
 
   const deleteSessionMutation = useMutation(
     api.chat.deleteSession.mutationOptions({
-      onSuccess: () => {
-        if (currentSessionId && editingSession === currentSessionId) {
+      onSuccess: (data, variables, context) => {
+        if (variables.sessionId === currentSessionId) {
           router.push("/");
         }
+        queryClient.invalidateQueries(api.chat.getSessions.queryFilter());
       },
     }),
   );
 
   const handleCreateSession = () => {
-    createSessionMutation.mutate({});
+    if (status === "authenticated") {
+      createSessionMutation.mutate({});
+    } else {
+      router.push("/auth/signin");
+    }
   };
 
   const handleUpdateTitle = (sessionId: string) => {
     if (newTitle.trim()) {
-      updateTitleMutation.mutate(
-        { sessionId, title: newTitle.trim() },
-        {
-          onSuccess: () => {
-            queryClient.invalidateQueries(api.chat.getSessions.queryFilter());
-          },
-        },
-      );
+      updateTitleMutation.mutate({ sessionId, title: newTitle.trim() });
     }
   };
 
   const handleDeleteSession = (sessionId: string) => {
-    deleteSessionMutation.mutate(
-      { sessionId },
-      {
-        onSuccess: () => {
-          queryClient.invalidateQueries(api.chat.getSessions.queryFilter());
-        },
-      },
-    );
+    deleteSessionMutation.mutate({ sessionId });
   };
 
   if (isLoading) {
@@ -116,10 +134,10 @@ export function SessionList({ currentSessionId }: SessionListProps) {
         New Chat
       </Button>
 
-      {sessionsData?.sessions?.map((session) => (
+      {allSessions.map((session) => (
         <Card
           key={session.id}
-          className={`transition-colors p-1 m-2  hover:bg-muted/50 ${
+          className={`transition-colors p-1 w-full my-2 hover:bg-muted/50 ${
             currentSessionId === session.id ? "ring-2 ring-blue-500" : ""
           }`}
         >
@@ -214,12 +232,26 @@ export function SessionList({ currentSessionId }: SessionListProps) {
           </CardContent>
         </Card>
       ))}
-
-      {sessionsData?.sessions?.length === 0 && (
+      {hasNextPage && (
+        <Button
+          variant="outline"
+          onClick={() => fetchNextPage()}
+          disabled={isFetchingNextPage}
+          className="w-full my-2"
+        >
+          {isFetchingNextPage ? "Loading more..." : "Load More"}
+        </Button>
+      )}
+      {allSessions.length === 0 && (
         <div className="text-center py-8 text-muted-foreground">
           <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-50" />
           <p>No chat sessions yet</p>
-          <p className="text-sm">Start a new conversation to begin</p>
+          <p className="text-sm">
+            {" "}
+            {status === "authenticated"
+              ? "Start a new conversation to begin"
+              : "Login to start conversation"}
+          </p>
         </div>
       )}
     </div>

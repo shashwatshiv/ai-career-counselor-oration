@@ -36,7 +36,9 @@ export default function SignIn() {
         </CardHeader>
         <CardContent className="space-y-4">
           <Button
-            onClick={() => signIn("google", { callbackUrl: "/" })}
+            onClick={() =>
+              signIn("google", { callbackUrl: "/", redirect: true })
+            }
             className="w-full"
             size="lg"
           >

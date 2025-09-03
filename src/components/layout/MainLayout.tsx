@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Menu, X, LogOut, User } from "lucide-react";
 import { SessionList } from "@/components/chat/SessionList";
 import { signOut, useSession } from "next-auth/react";

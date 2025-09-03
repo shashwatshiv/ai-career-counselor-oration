@@ -22,10 +22,6 @@ export default function HomePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
 
-  const { data: recentSessions } = useQuery(
-    api.chat.getSessions.queryOptions({ limit: 3 }, { enabled: !!session }),
-  );
-
   const createSessionMutation = useMutation(
     api.chat.createSession.mutationOptions({
       onSuccess: (session) => {
@@ -33,11 +29,11 @@ export default function HomePage() {
       },
     }),
   );
-  useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/signin");
-    }
-  }, [status, router]);
+  // useEffect(() => {
+  //   if (status === "unauthenticated") {
+  //     router.push("/auth/signin");
+  //   }
+  // }, [status, router]);
 
   if (status === "loading") {
     return (
@@ -50,12 +46,12 @@ export default function HomePage() {
     );
   }
 
-  if (!session) {
-    return null;
-  }
-
   const handleStartNewChat = () => {
-    createSessionMutation.mutate({});
+    if (status === "authenticated") {
+      createSessionMutation.mutate({});
+    } else {
+      router.push("/auth/signin");
+    }
   };
 
   return (
@@ -118,44 +114,6 @@ export default function HomePage() {
               </CardHeader>
             </Card>
           </div>
-
-          {/* Recent Chats */}
-          {recentSessions?.sessions && recentSessions.sessions.length > 0 && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-semibold">Recent Conversations</h2>
-              </div>
-
-              <div className="grid gap-4">
-                {recentSessions.sessions.map((session) => (
-                  <Card
-                    key={session.id}
-                    className="hover:shadow-md transition-shadow"
-                  >
-                    <CardContent className="p-4">
-                      <Link href={`/chat/${session.id}`}>
-                        <div className="flex items-center justify-between">
-                          <div className="min-w-0 flex-1">
-                            <h3 className="font-medium truncate">
-                              {session.title}
-                            </h3>
-                            <p className="text-sm text-muted-foreground">
-                              {session._count.messages} messages • Updated{" "}
-                              {format(
-                                new Date(session.updatedAt),
-                                "MMM d, yyyy",
-                              )}
-                            </p>
-                          </div>
-                          <MessageSquare className="h-5 w-5 text-muted-foreground ml-4" />
-                        </div>
-                      </Link>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
 
           {/* Getting Started Tips */}
           <Card>

@@ -29,12 +29,11 @@ export default function ChatPage() {
     sessionId: string;
     content: string;
   } | null>(null);
-  const [zero, setZero] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const sessionId = params.sessionId as string;
-
+  // move state dat thing to providers
   const {
     data: chatSession,
     isLoading,
@@ -62,7 +61,7 @@ export default function ChatPage() {
       onData: (chunk: string) => {
         setStreamingMessage((prev) => prev + chunk);
         // Scroll to bottom on each chunk
-        setTimeout(() => scrollToBottom(), 50);
+        setTimeout(() => scrollToBottom(), 20);
       },
       onError: (error) => {
         console.error("Streaming error:", error);
@@ -88,8 +87,8 @@ export default function ChatPage() {
           queryClient.invalidateQueries(
             api.chat.getSession.queryFilter({ sessionId }),
           );
+          setTimeout(() => scrollToBottom(), 0);
           queryClient.invalidateQueries(api.chat.getSessions.queryFilter());
-          // scrollToBottom();
         }
       },
     }),
@@ -124,7 +123,6 @@ export default function ChatPage() {
       setStreamingMessage("");
     }
   };
-
   const stopStreaming = () => {
     // Reset the subscription by clearing the input
     setSubscriptionInput(null);
@@ -134,19 +132,12 @@ export default function ChatPage() {
     if (subscription) {
       subscription.reset();
     }
+
     // Refresh messages
     queryClient.invalidateQueries(
       api.chat.getSession.queryFilter({ sessionId }),
     );
   };
-
-  // Handle subscription completion
-  // useEffect(() => {
-  //   if (subscription.status === "pending" && !isStreaming) {
-  //     setIsStreaming(true);
-  //   }
-
-  // }, [subscription.status, isStreaming, sessionId, queryClient]);
 
   if (!session) {
     router.push("/auth/signin");
@@ -266,7 +257,7 @@ export default function ChatPage() {
                   </Card>
                 </div>
               )}
-              {streamingMessage && (
+              {subscription.status == "connecting" && (
                 <div className="flex  items-start gap-3">
                   <div className="h-8 w-8 bg-blue-500 rounded-full flex items-center justify-center">
                     <Loader2 className="h-4 w-4 text-white animate-spin" />
