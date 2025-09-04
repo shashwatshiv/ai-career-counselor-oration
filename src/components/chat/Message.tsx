@@ -4,7 +4,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { format } from "date-fns";
 import { type Message } from "../../generated/prisma";
-import { Bot, User } from "lucide-react";
+import { Bot, BrainCircuit, User } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 interface MessageProps {
@@ -34,19 +34,21 @@ export function ChatMessage({ message, userImage, userName }: MessageProps) {
             </AvatarFallback>
           </>
         ) : (
-          <AvatarFallback className="bg-blue-500 text-white">
-            <Bot className="h-4 w-4" />
+          <AvatarFallback className="bg-background dark:text-white">
+            <BrainCircuit className="h-6 w-6" />
           </AvatarFallback>
         )}
       </Avatar>
 
       <Card
-        className={`max-w-[70%] p-3 ${
-          isUser ? "bg-blue-500 text-white " : "bg-muted"
+        className={`max-w-[70%] p-3 rounded-3xl  ${
+          isUser
+            ? "dark:bg-blue-900 rounded-tr-none  bg-blue-100 dark:text-white "
+            : "bg-muted rounded-tl-none"
         }`}
       >
         <div className="space-y-2">
-          <div className="text-sm leading-relaxed whitespace-pre-wrap ">
+          <div className=" leading-relaxed whitespace-pre-wrap ">
             <ReactMarkdown>{message.content}</ReactMarkdown>
           </div>
           <div

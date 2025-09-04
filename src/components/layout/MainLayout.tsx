@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, X, LogOut, User } from "lucide-react";
 import { SessionList } from "@/components/chat/SessionList";
 import { signOut, useSession } from "next-auth/react";
+import Link from "next/link";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -12,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-
+import { ThemeToggle } from "../ui/theme-toggle";
 interface MainLayoutProps {
   children: React.ReactNode;
   currentSessionId?: string;
@@ -43,15 +44,21 @@ export function MainLayout({ children, currentSessionId }: MainLayoutProps) {
         <div className="flex flex-col h-full">
           {/* Sidebar header */}
           <div className="flex items-center justify-between p-4 border-b flex-shrink-0">
-            <h1 className="font-semibold text-lg">Career Counselor</h1>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="lg:hidden"
-              onClick={() => setSidebarOpen(false)}
-            >
-              <X className="h-4 w-4" />
-            </Button>
+            <Link href="/">
+              <h1 className="font-semibold text-xl">Career Counselor</h1>
+            </Link>
+
+            <div className="flex items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                className="lg:hidden"
+                onClick={() => setSidebarOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+              <ThemeToggle></ThemeToggle>
+            </div>
           </div>
 
           {/* Session list */}

@@ -2,6 +2,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { ProviderApp } from "@/lib/trpc/provider";
 import { AuthSessionProvider } from "@/components/providers/SessionProvider";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -20,11 +21,13 @@ export default async function RootLayout({
   const session = await getServerSession(authOptions);
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <AuthSessionProvider session={session}>
-          <ProviderApp>{children}</ProviderApp>
-        </AuthSessionProvider>
+        <ThemeProvider>
+          <AuthSessionProvider session={session}>
+            <ProviderApp>{children}</ProviderApp>
+          </AuthSessionProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

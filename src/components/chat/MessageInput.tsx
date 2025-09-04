@@ -40,31 +40,33 @@ export function MessageInput({
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex items-end gap-2 p-4 border-t bg-background"
+      className="flex justify-center gap-2 pb-3  w-full bg-none"
     >
-      <Textarea
-        value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder={
-          "Type your message... (Press Enter to send, Shift+Enter for new line)"
-        }
-        className="min-h-[60px] resize-none flex-1"
-        disabled={disabled || isLoading}
-        maxLength={2000}
-      />
-      <Button
-        type="submit"
-        // disabled={!message.trim() || isLoading || disabled}
-        size="icon"
-        className="h-[60px] w-[60px]"
-      >
-        {isLoading ? (
-          <StopCircle className="size-5" />
-        ) : (
-          <Send className="size-5" />
-        )}
-      </Button>
+      <div className="flex md:w-5/6 gap-4 p-4 ">
+        <Textarea
+          value={message}
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder={
+            "Type your message... (Press Enter to send, Shift+Enter for new line)"
+          }
+          className="min-h-[60px]  resize-none flex-1 rounded-3xl p-4 border-none dark:bg-zinc-600"
+          disabled={disabled || isLoading}
+          maxLength={2000}
+        />
+        <Button
+          type="submit"
+          // disabled={!message.trim() || isLoading || disabled}
+          size="icon"
+          className="h-[60px] w-[60px] rounded-full"
+        >
+          {isLoading ? (
+            <StopCircle className="size-5" />
+          ) : (
+            <Send className="size-5" />
+          )}
+        </Button>
+      </div>
     </form>
   );
 }

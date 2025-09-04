@@ -15,17 +15,17 @@ import { useEffect } from "react";
 export default function SignIn() {
   const router = useRouter();
 
-  useEffect(() => {
-    getSession().then((session) => {
-      if (session) {
-        router.push("/");
-      }
-    });
-  }, [router]);
+  // useEffect(() => {
+  //   getSession().then((session) => {
+  //     if (session) {
+  //       router.push("/");
+  //     }
+  //   });
+  // }, [router]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center ">
+      <Card className="w-full max-w-md hover:shadow-xl hover:scale-105 shadow-md transition-all duration-300">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl text-center">
             Welcome to Career Counselor

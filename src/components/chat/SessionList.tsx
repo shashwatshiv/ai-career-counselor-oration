@@ -56,7 +56,7 @@ export function SessionList({ currentSessionId }: SessionListProps) {
     isFetchingNextPage,
   } = useInfiniteQuery({
     ...api.chat.getSessions.infiniteQueryOptions(
-      { limit: 10 }, // Your query input
+      { limit: 8 }, // Your query input
       {
         getNextPageParam: (lastPage) => lastPage.nextCursor,
         // Optional: Configure initial page param if needed
@@ -87,10 +87,11 @@ export function SessionList({ currentSessionId }: SessionListProps) {
   const deleteSessionMutation = useMutation(
     api.chat.deleteSession.mutationOptions({
       onSuccess: (data, variables, context) => {
+        queryClient.ensureInfiniteQueryData;
+        queryClient.invalidateQueries(api.chat.getSessions.queryFilter());
         if (variables.sessionId === currentSessionId) {
           router.push("/");
         }
-        queryClient.invalidateQueries(api.chat.getSessions.queryFilter());
       },
     }),
   );
@@ -133,38 +134,35 @@ export function SessionList({ currentSessionId }: SessionListProps) {
         <Plus className="h-4 w-4 mr-2" />
         New Chat
       </Button>
-
+      <div className="p-2">Previous Chats</div>
       {allSessions.map((session) => (
         <Card
           key={session.id}
-          className={`transition-colors p-1 w-full my-2 hover:bg-muted/50 ${
-            currentSessionId === session.id ? "ring-2 ring-blue-500" : ""
+          className={` group transition-colors p-1 w-full border-0 shadow-none  my-1 hover:bg-zinc-100 dark:hover:bg-zinc-600 ${
+            currentSessionId === session.id
+              ? " bg-zinc-200 dark:bg-zinc-700"
+              : ""
           }`}
         >
-          <CardContent className="p-1">
+          <CardContent className="">
             <div className="flex items-center justify-between">
               <Link href={`/chat/${session.id}`} className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
-                  <MessageSquare className="h-4 w-4 flex-shrink-0" />
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-medium truncate">
+                    <p className="text-sm font-normal truncate">
                       {session.title}
                     </p>
-                    <div className="flex items-center gap-2 mt-1">
-                      {/* <Badge variant="secondary" className="text-xs">
-                        {session._count.messages} messages
-                      </Badge> */}
-                      <span className="text-xs text-muted-foreground">
-                        {format(new Date(session.updatedAt), "MMM d")}
-                      </span>
-                    </div>
                   </div>
                 </div>
               </Link>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 opacity-0 group-hover:opacity-100"
+                  >
                     <MoreVertical className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>

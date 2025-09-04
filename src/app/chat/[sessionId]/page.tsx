@@ -112,7 +112,7 @@ export default function ChatPage() {
   }, [chatSession?.messages, isAtBottom, streamingMessage]);
 
   const handleSendMessage = async (content: string) => {
-    if (isStreaming) return;
+    if (isStreaming || !content) return;
 
     try {
       // Set the subscription input to start the subscription
@@ -185,20 +185,20 @@ export default function ChatPage() {
 
   return (
     <MainLayout currentSessionId={sessionId}>
-      <div className="flex-1 flex flex-col h-full">
+      <div className="flex-1 flex flex-col h-full overflow-y-auto">
         {/* Chat header */}
-        <div className="border-b p-4 bg-card flex-shrink-0">
+        {/* <div className="border-b p-4 bg-card flex-shrink-0">
           <h2 className="font-semibold truncate">{chatSession?.title}</h2>
           <p className="text-sm text-muted-foreground">
             {chatSession?.messages?.length} messages
           </p>
-        </div>
+        </div> */}
 
         {/* Messages */}
         <div
           ref={messagesContainerRef}
           onScroll={handleScroll}
-          className="flex-1 overflow-y-auto p-4 space-y-4"
+          className="flex-1  p-4 md:w-5/6 m-auto space-y-4"
         >
           {chatSession?.messages?.length === 0 && !subscription.status ? (
             <div className="flex-1 flex items-center justify-center text-center">
@@ -252,27 +252,26 @@ export default function ChatPage() {
                   <Avatar className="h-8 w-8">
                     <AvatarImage src={session.user?.image || undefined} />
                   </Avatar>
-                  <Card className="bg-blue-500 p-3 text-white text-sm">
+                  <Card className=" dark:bg-blue-900 rounded-tr-none  bg-blue-100 dark:text-white  p-3">
                     <p>{subscriptionInput?.content}</p>
                   </Card>
                 </div>
               )}
-              {subscription.status == "connecting" && (
+              {(subscription.status == "connecting" ||
+                subscription.status == "pending") && (
                 <div className="flex  items-start gap-3">
-                  <div className="h-8 w-8 bg-blue-500 rounded-full flex items-center justify-center">
-                    <Loader2 className="h-4 w-4 text-white animate-spin" />
+                  <div className="h-8 w-8 bg-background rounded-full flex items-center justify-center">
+                    <Loader2 className="h-8 w-8 dark:text-white animate-spin" />
                   </div>
-                  <Card className="bg-muted p-3">
-                    <p className="text-sm text-muted-foreground">
-                      AI is thinking...
-                    </p>
+                  <Card className="bg-muted p-3  rounded-tl-none">
+                    <p className=" text-muted-foreground">AI is thinking...</p>
                   </Card>
                 </div>
               )}
               {/* Streaming message display */}
               {isStreaming && streamingMessage && (
                 <div className="flex items-start gap-3">
-                  <div className="h-8 w-8 bg-blue-500 rounded-full flex items-center justify-center">
+                  <div className="h-8 w-8 bg-background rounded-full flex items-center justify-center">
                     <Loader2 className="h-4 w-4 text-white animate-spin" />
                   </div>
                   <Card className="bg-muted p-3 max-w-[70%]">
@@ -304,12 +303,14 @@ export default function ChatPage() {
         )}
 
         {/* Message input */}
-        <MessageInput
-          onSendMessage={handleSendMessage}
-          isLoading={isStreaming}
-          disabled={!chatSession || isStreaming}
-          stopStreaming={stopStreaming}
-        />
+        <div className="flex justify-center">
+          <MessageInput
+            onSendMessage={handleSendMessage}
+            isLoading={isStreaming}
+            disabled={!chatSession || isStreaming}
+            stopStreaming={stopStreaming}
+          />
+        </div>
       </div>
     </MainLayout>
   );

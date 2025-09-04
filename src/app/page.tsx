@@ -16,6 +16,7 @@ import { MessageSquare, Plus, TrendingUp, Users, BookOpen } from "lucide-react";
 import Link from "next/link";
 import { format } from "date-fns";
 import { useQuery, useMutation } from "@tanstack/react-query";
+import { MessageInput } from "@/components/chat/MessageInput";
 
 export default function HomePage() {
   const api = useTRPC();
@@ -29,11 +30,6 @@ export default function HomePage() {
       },
     }),
   );
-  // useEffect(() => {
-  //   if (status === "unauthenticated") {
-  //     router.push("/auth/signin");
-  //   }
-  // }, [status, router]);
 
   if (status === "loading") {
     return (
@@ -81,7 +77,7 @@ export default function HomePage() {
 
           {/* Features Grid */}
           <div className="grid md:grid-cols-3 gap-6">
-            <Card>
+            <Card className="hover:shadow-xl hover:scale-105 shadow-md transition-all duration-300">
               <CardHeader>
                 <TrendingUp className="h-8 w-8 text-blue-500 mb-2" />
                 <CardTitle>Career Planning</CardTitle>
@@ -92,7 +88,7 @@ export default function HomePage() {
               </CardHeader>
             </Card>
 
-            <Card>
+            <Card className="hover:shadow-xl hover:scale-105 shadow-md transition-all duration-300">
               <CardHeader>
                 <Users className="h-8 w-8 text-green-500 mb-2" />
                 <CardTitle>Interview & Networking</CardTitle>
@@ -103,7 +99,7 @@ export default function HomePage() {
               </CardHeader>
             </Card>
 
-            <Card>
+            <Card className="hover:shadow-xl hover:scale-105 shadow-md transition-all duration-300">
               <CardHeader>
                 <BookOpen className="h-8 w-8 text-purple-500 mb-2" />
                 <CardTitle>Skill Development</CardTitle>
@@ -116,7 +112,7 @@ export default function HomePage() {
           </div>
 
           {/* Getting Started Tips */}
-          <Card>
+          <Card className="hover:shadow-xl hover:scale-105 shadow-md transition-all duration-300">
             <CardHeader>
               <CardTitle>Getting Started Tips</CardTitle>
               <CardDescription>
@@ -153,6 +149,14 @@ export default function HomePage() {
               </div>
             </CardContent>
           </Card>
+        </div>
+        <div className="flex justify-center">
+          <MessageInput
+            onSendMessage={() => {}}
+            // isLoading={isStreaming}
+            // disabled={!chatSession || isStreaming}
+            // stopStreaming={stopStreaming}
+          />
         </div>
       </div>
     </MainLayout>
