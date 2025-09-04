@@ -50,8 +50,8 @@ export default function ChatPage() {
       { sessionId },
       {
         enabled: !!sessionId && !!userSession,
-      },
-    ),
+      }
+    )
   );
 
   // Move useSubscription to the top level of the component
@@ -90,13 +90,13 @@ export default function ChatPage() {
           setIsStreaming(false);
           setStreamingMessage("");
           queryClient.invalidateQueries(
-            api.chat.getSession.queryFilter({ sessionId }),
+            api.chat.getSession.queryFilter({ sessionId })
           );
           setTimeout(() => scrollToBottom(), 0);
           queryClient.invalidateQueries(api.chat.getSessions.queryFilter());
         }
       },
-    }),
+    })
   );
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -140,7 +140,7 @@ export default function ChatPage() {
 
     // Refresh messages
     queryClient.invalidateQueries(
-      api.chat.getSession.queryFilter({ sessionId }),
+      api.chat.getSession.queryFilter({ sessionId })
     );
   };
 
