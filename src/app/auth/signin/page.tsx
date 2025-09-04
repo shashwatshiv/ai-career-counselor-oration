@@ -17,7 +17,7 @@ export default function SignIn() {
       {/* Page Header */}
       <div className="text-center mb-8 max-w-2xl">
         <h1 className="text-4xl md:text-5xl font-bold mb-4  ">
-          Welcome to Oration AI
+          Welcome to Career Counselor AI
         </h1>
         <p className="text-lg md:text-xl text-muted-foreground mb-2">
           Your intelligent career counselor powered by artificial intelligence
