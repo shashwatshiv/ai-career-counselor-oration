@@ -16,15 +16,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { ThemeToggle } from "../ui/theme-toggle";
 interface MainLayoutProps {
   children: React.ReactNode;
-  currentSessionId?: string;
-  chatStarted?: number;
 }
 
-export function MainLayout({
-  children,
-  currentSessionId,
-  chatStarted,
-}: MainLayoutProps) {
+export function MainLayout({ children }: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { data: userSession } = useSession();
 
