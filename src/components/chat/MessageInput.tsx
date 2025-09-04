@@ -40,17 +40,15 @@ export function MessageInput({
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex justify-center gap-2 pb-3  w-full bg-none"
+      className="flex justify-center  py-4 w-full bg-none"
     >
-      <div className="flex md:w-5/6 gap-4 p-4 ">
+      <div className="flex md:w-5/6 w-full px-4 gap-4  ">
         <Textarea
           value={message}
           onChange={(e) => setMessage(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={
-            "Type your message... (Press Enter to send, Shift+Enter for new line)"
-          }
-          className="min-h-[60px]  resize-none flex-1 rounded-3xl p-4 border-none dark:bg-zinc-600"
+          placeholder={"Ask Anything about Career"}
+          className="min-h-[60px]  resize-none flex-1 w-full rounded-3xl p-4 border-none bg-zinc-100 dark:bg-zinc-600"
           disabled={disabled || isLoading}
           maxLength={2000}
         />

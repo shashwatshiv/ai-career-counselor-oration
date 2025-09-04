@@ -17,11 +17,16 @@ import { ThemeToggle } from "../ui/theme-toggle";
 interface MainLayoutProps {
   children: React.ReactNode;
   currentSessionId?: string;
+  chatStarted?: number;
 }
 
-export function MainLayout({ children, currentSessionId }: MainLayoutProps) {
+export function MainLayout({
+  children,
+  currentSessionId,
+  chatStarted,
+}: MainLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { data: session } = useSession();
+  const { data: userSession } = useSession();
 
   return (
     <div className="flex h-screen bg-background">
@@ -47,7 +52,6 @@ export function MainLayout({ children, currentSessionId }: MainLayoutProps) {
             <Link href="/">
               <h1 className="font-semibold text-xl">Career Counselor</h1>
             </Link>
-
             <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
@@ -60,32 +64,33 @@ export function MainLayout({ children, currentSessionId }: MainLayoutProps) {
               <ThemeToggle></ThemeToggle>
             </div>
           </div>
-
           {/* Session list */}
           <div className="flex-1 overflow-y-auto">
-            <SessionList currentSessionId={currentSessionId} />
+            <SessionList
+              currentSessionId={currentSessionId}
+              chatStarted={chatStarted}
+            />
           </div>
-
           {/* User menu */}
-          {session?.user && (
+          {userSession?.user && (
             <div className="border-t p-4 flex-shrink-0">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" className="w-full justify-start p-2">
                     <Avatar className="h-8 w-8 mr-3">
-                      <AvatarImage src={session.user.image || undefined} />
+                      <AvatarImage src={userSession.user.image || undefined} />
                       <AvatarFallback>
-                        {session.user.name?.[0]?.toUpperCase() || (
+                        {userSession.user.name?.[0]?.toUpperCase() || (
                           <User className="h-4 w-4" />
                         )}
                       </AvatarFallback>
                     </Avatar>
                     <div className="text-left min-w-0 flex-1">
                       <p className="text-sm font-medium truncate">
-                        {session.user.name || "User"}
+                        {userSession.user.name || "User"}
                       </p>
                       <p className="text-xs text-muted-foreground truncate">
-                        {session.user.email}
+                        {userSession.user.email}
                       </p>
                     </div>
                   </Button>
@@ -99,21 +104,39 @@ export function MainLayout({ children, currentSessionId }: MainLayoutProps) {
               </DropdownMenu>
             </div>
           )}
+          {!userSession && (
+            <div className="p-4">
+              <Link href="/auth/signin">
+                <Button variant="gradient" className="w-full">
+                  Login
+                </Button>
+              </Link>
+            </div>
+          )}
         </div>
       </aside>
 
       {/* Main content */}
       <main className="flex-1 flex flex-col min-w-0 lg:ml-80">
         {/* Mobile header */}
-        <header className="lg:hidden flex items-center gap-2 p-4 border-b bg-card flex-shrink-0">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setSidebarOpen(true)}
-          >
-            <Menu className="h-4 w-4" />
-          </Button>
-          <h1 className="font-semibold">Career Counselor</h1>
+        <header className="lg:hidden items-center gap-2 p-4 border-b bg-card flex-shrink-0">
+          <div className="flex flex-row justify-between">
+            <div className="flex items-center">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setSidebarOpen(true)}
+              >
+                <Menu className="h-4 w-4" />
+              </Button>
+              <h1 className="font-semibold">Career Counselor</h1>
+            </div>
+            <div>
+              <Link href="/auth/signin">
+                <Button variant="gradient"> Login</Button>
+              </Link>
+            </div>
+          </div>
         </header>
 
         {/* Content */}

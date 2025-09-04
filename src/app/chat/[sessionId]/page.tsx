@@ -21,7 +21,7 @@ export default function ChatPage() {
   const queryClient = useQueryClient();
   const params = useParams();
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: userSession, status: userStatus } = useSession();
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState("");
@@ -34,6 +34,12 @@ export default function ChatPage() {
 
   const sessionId = params.sessionId as string;
   // move state dat thing to providers
+  useEffect(() => {
+    if (!userSession) {
+      router.push("/auth/signin");
+    }
+  }, [userSession, router]);
+
   const {
     data: chatSession,
     isLoading,
@@ -43,8 +49,7 @@ export default function ChatPage() {
     api.chat.getSession.queryOptions(
       { sessionId },
       {
-        enabled: !!sessionId,
-        retry: 1,
+        enabled: !!sessionId && !!userSession,
       },
     ),
   );
@@ -112,7 +117,7 @@ export default function ChatPage() {
   }, [chatSession?.messages, isAtBottom, streamingMessage]);
 
   const handleSendMessage = async (content: string) => {
-    if (isStreaming || !content) return;
+    if (isStreaming) return;
 
     try {
       // Set the subscription input to start the subscription
@@ -138,11 +143,6 @@ export default function ChatPage() {
       api.chat.getSession.queryFilter({ sessionId }),
     );
   };
-
-  if (!session) {
-    router.push("/auth/signin");
-    return null;
-  }
 
   if (isLoading) {
     return (
@@ -184,8 +184,11 @@ export default function ChatPage() {
   }
 
   return (
-    <MainLayout currentSessionId={sessionId}>
-      <div className="flex-1 flex flex-col h-full overflow-y-auto">
+    <MainLayout
+      currentSessionId={sessionId}
+      chatStarted={chatSession?.messages?.length}
+    >
+      <div className="flex-1 flex flex-col h-full ">
         {/* Chat header */}
         {/* <div className="border-b p-4 bg-card flex-shrink-0">
           <h2 className="font-semibold truncate">{chatSession?.title}</h2>
@@ -198,95 +201,101 @@ export default function ChatPage() {
         <div
           ref={messagesContainerRef}
           onScroll={handleScroll}
-          className="flex-1  p-4 md:w-5/6 m-auto space-y-4"
+          className="flex-1  p-4   overflow-y-auto space-y-4"
         >
-          {chatSession?.messages?.length === 0 && !subscription.status ? (
-            <div className="flex-1 flex items-center justify-center text-center">
-              <div className="max-w-md">
-                <div className="text-4xl mb-4">👋</div>
-                <h3 className="text-lg font-semibold mb-2">
-                  Welcome to Career Counseling
-                </h3>
-                <p className="text-muted-foreground mb-6">
-                  I'm here to help you navigate your career journey. You can ask
-                  me about:
-                </p>
-                <div className="grid grid-cols-1 gap-2 text-sm text-left">
-                  <div className="p-3 bg-muted rounded-lg">
-                    <strong>Career Planning:</strong> Goal setting, career
-                    paths, industry insights
-                  </div>
-                  <div className="p-3 bg-muted rounded-lg">
-                    <strong>Job Search:</strong> Resume tips, interview prep,
-                    networking strategies
-                  </div>
-                  <div className="p-3 bg-muted rounded-lg">
-                    <strong>Skill Development:</strong> Learning
-                    recommendations, certifications
-                  </div>
-                  <div className="p-3 bg-muted rounded-lg">
-                    <strong>Career Transitions:</strong> Changing fields, career
-                    pivots, next steps
-                  </div>
-                </div>
-                <p className="text-muted-foreground mt-4">
-                  Start by telling me about your career goals or any challenges
-                  you're facing!
-                </p>
-              </div>
-            </div>
-          ) : (
-            <>
-              {chatSession?.messages?.map((message) => (
-                <ChatMessage
-                  key={message.id}
-                  message={message}
-                  userImage={session?.user?.image}
-                  userName={session?.user?.name}
-                />
-              ))}
-
-              {(subscription.status == "connecting" ||
-                subscription.status == "pending") && (
-                <div className="flex flex-row-reverse items-start gap-3">
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={session.user?.image || undefined} />
-                  </Avatar>
-                  <Card className=" dark:bg-blue-900 rounded-tr-none  bg-blue-100 dark:text-white  p-3">
-                    <p>{subscriptionInput?.content}</p>
-                  </Card>
-                </div>
-              )}
-              {(subscription.status == "connecting" ||
-                subscription.status == "pending") && (
-                <div className="flex  items-start gap-3">
-                  <div className="h-8 w-8 bg-background rounded-full flex items-center justify-center">
-                    <Loader2 className="h-8 w-8 dark:text-white animate-spin" />
-                  </div>
-                  <Card className="bg-muted p-3  rounded-tl-none">
-                    <p className=" text-muted-foreground">AI is thinking...</p>
-                  </Card>
-                </div>
-              )}
-              {/* Streaming message display */}
-              {isStreaming && streamingMessage && (
-                <div className="flex items-start gap-3">
-                  <div className="h-8 w-8 bg-background rounded-full flex items-center justify-center">
-                    <Loader2 className="h-4 w-4 text-white animate-spin" />
-                  </div>
-                  <Card className="bg-muted p-3 max-w-[70%]">
-                    <div className="space-y-2">
-                      <div className="text-sm leading-relaxed whitespace-pre-wrap">
-                        <ReactMarkdown>{streamingMessage}</ReactMarkdown>
-                        <span className="animate-pulse">▋</span>
-                      </div>
+          <div className=" flex-1 md:w-5/6 w-full my-10 mx-auto">
+            {!subscriptionInput ? (
+              <div className="flex-1 flex items-center  justify-center text-center">
+                <div className="max-w-md">
+                  <div className="text-4xl mb-4">👋</div>
+                  <h3 className="text-lg font-semibold mb-2">
+                    Welcome to Career Counseling
+                  </h3>
+                  <p className="text-muted-foreground mb-6">
+                    I'm here to help you navigate your career journey. You can
+                    ask me about:
+                  </p>
+                  <div className="grid grid-cols-1 gap-2 text-sm text-left">
+                    <div className="p-3 bg-muted rounded-lg">
+                      <strong>Career Planning:</strong> Goal setting, career
+                      paths, industry insights
                     </div>
-                  </Card>
+                    <div className="p-3 bg-muted rounded-lg">
+                      <strong>Job Search:</strong> Resume tips, interview prep,
+                      networking strategies
+                    </div>
+                    <div className="p-3 bg-muted rounded-lg">
+                      <strong>Skill Development:</strong> Learning
+                      recommendations, certifications
+                    </div>
+                    <div className="p-3 bg-muted rounded-lg">
+                      <strong>Career Transitions:</strong> Changing fields,
+                      career pivots, next steps
+                    </div>
+                  </div>
+                  <p className="text-muted-foreground mt-4">
+                    Start by telling me about your career goals or any
+                    challenges you're facing!
+                  </p>
                 </div>
-              )}
-            </>
-          )}
-          <div ref={messagesEndRef} />
+              </div>
+            ) : (
+              <>
+                {chatSession?.messages?.map((message) => (
+                  <ChatMessage
+                    key={message.id}
+                    message={message}
+                    userImage={userSession?.user?.image}
+                    userName={userSession?.user?.name}
+                  />
+                ))}
+
+                {(subscription.status == "connecting" ||
+                  subscription.status == "pending") && (
+                  <div className="flex flex-row-reverse items-start gap-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage
+                        src={userSession?.user?.image || undefined}
+                      />
+                    </Avatar>
+                    <Card className=" dark:bg-blue-900 rounded-tr-none  bg-blue-100 dark:text-white  p-3">
+                      <p>{subscriptionInput?.content}</p>
+                    </Card>
+                  </div>
+                )}
+                {(subscription.status == "connecting" ||
+                  subscription.status == "pending") && (
+                  <div className="flex  items-start gap-3">
+                    <div className="h-8 w-8 bg-background rounded-full flex items-center justify-center">
+                      <Loader2 className="h-8 w-8 dark:text-white animate-spin" />
+                    </div>
+                    <Card className="bg-muted p-3  rounded-tl-none">
+                      <p className=" text-muted-foreground">
+                        AI is thinking...
+                      </p>
+                    </Card>
+                  </div>
+                )}
+                {/* Streaming message display */}
+                {isStreaming && streamingMessage && (
+                  <div className="flex items-start my-4 gap-3">
+                    <div className="h-8 w-8 bg-background rounded-full flex items-center justify-center">
+                      <Loader2 className="h-4 w-4 text-white animate-spin" />
+                    </div>
+                    <Card className="bg-muted p-3 max-w-[70%]">
+                      <div className="space-y-2">
+                        <div className="text-sm leading-relaxed whitespace-pre-wrap">
+                          <ReactMarkdown>{streamingMessage}</ReactMarkdown>
+                          <span className="animate-pulse">▋</span>
+                        </div>
+                      </div>
+                    </Card>
+                  </div>
+                )}
+              </>
+            )}
+            <div ref={messagesEndRef} />
+          </div>
         </div>
 
         {/* Scroll to bottom button */}

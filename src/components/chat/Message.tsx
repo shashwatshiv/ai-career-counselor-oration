@@ -19,7 +19,9 @@ export function ChatMessage({ message, userImage, userName }: MessageProps) {
 
   return (
     <div
-      className={`flex items-start gap-3 ${isUser ? "flex-row-reverse" : ""}`}
+      className={`flex my-5 items-start gap-3 ${
+        isUser ? "flex-row-reverse" : ""
+      }`}
     >
       <Avatar className="h-8 w-8">
         {isUser ? (

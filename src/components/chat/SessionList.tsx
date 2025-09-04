@@ -1,9 +1,9 @@
 "use client";
+
 import { useTRPC } from "@/lib/trpc/client";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { useSession } from "next-auth/react";
-
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,7 +22,7 @@ import { MessageSquare, MoreVertical, Edit, Trash2, Plus } from "lucide-react";
 import { format } from "date-fns";
 import Link from "next/link";
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import {
   useQuery,
   useQueryClient,
@@ -32,21 +32,26 @@ import {
 
 interface SessionListProps {
   currentSessionId?: string;
+  chatStarted?: number;
 }
 
 export function SessionList({ currentSessionId }: SessionListProps) {
   const api = useTRPC();
   const queryClient = useQueryClient();
-  const { status } = useSession();
+  const { data: userSession, status } = useSession();
   const [editingSession, setEditingSession] = useState<string | null>(null);
   const [newTitle, setNewTitle] = useState("");
   const router = useRouter();
+  const params = useParams();
+  const sessionId = params.sessionId as string;
 
-  // const { data: sessionsData, isLoading } = useQuery(
-  //   api.chat.getSessions.queryOptions({
-  //     limit: 8,
-  //   }),
-  // );
+  const { data: sessionsData } = useQuery(
+    api.chat.getSession.queryOptions(
+      { sessionId },
+      { enabled: !!sessionId && !!userSession },
+    ),
+  );
+
   const {
     data,
     isLoading,
@@ -58,6 +63,7 @@ export function SessionList({ currentSessionId }: SessionListProps) {
     ...api.chat.getSessions.infiniteQueryOptions(
       { limit: 8 }, // Your query input
       {
+        enabled: !!userSession,
         getNextPageParam: (lastPage) => lastPage.nextCursor,
         // Optional: Configure initial page param if needed
       },
@@ -88,7 +94,9 @@ export function SessionList({ currentSessionId }: SessionListProps) {
     api.chat.deleteSession.mutationOptions({
       onSuccess: (data, variables, context) => {
         queryClient.ensureInfiniteQueryData;
-        queryClient.invalidateQueries(api.chat.getSessions.queryFilter());
+        queryClient.invalidateQueries(
+          api.chat.getSessions.infiniteQueryFilter(),
+        );
         if (variables.sessionId === currentSessionId) {
           router.push("/");
         }
@@ -98,6 +106,7 @@ export function SessionList({ currentSessionId }: SessionListProps) {
 
   const handleCreateSession = () => {
     if (status === "authenticated") {
+      if (sessionsData?.messages.length === 0) return;
       createSessionMutation.mutate({});
     } else {
       router.push("/auth/signin");
@@ -127,6 +136,7 @@ export function SessionList({ currentSessionId }: SessionListProps) {
   return (
     <div className="space-y-3 p-4">
       <Button
+        variant="gradient"
         onClick={handleCreateSession}
         className="w-full"
         disabled={createSessionMutation.isPending}

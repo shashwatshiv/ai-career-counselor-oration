@@ -1,5 +1,5 @@
 "use client";
-import { useEffect } from "react";
+
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { MainLayout } from "@/components/layout/MainLayout";
@@ -13,14 +13,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { useTRPC } from "@/lib/trpc/client";
 import { MessageSquare, Plus, TrendingUp, Users, BookOpen } from "lucide-react";
-import Link from "next/link";
-import { format } from "date-fns";
-import { useQuery, useMutation } from "@tanstack/react-query";
-import { MessageInput } from "@/components/chat/MessageInput";
+import { useMutation } from "@tanstack/react-query";
 
 export default function HomePage() {
   const api = useTRPC();
-  const { data: session, status } = useSession();
+  const { data: userSession, status } = useSession();
   const router = useRouter();
 
   const createSessionMutation = useMutation(
@@ -52,11 +49,11 @@ export default function HomePage() {
 
   return (
     <MainLayout>
-      <div className="flex-1 overflow-y-auto h-full">
+      <div className="flex-1 overflow-y-auto h-full mt-10 ">
         <div className="max-w-4xl mx-auto p-6 space-y-8">
           {/* Welcome Section */}
           <div className="text-center space-y-4">
-            <h1 className="text-4xl font-bold text-foreground">
+            <h1 className="text-4xl font-bold text-foreground ">
               Welcome to Career Counselor AI
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
@@ -65,6 +62,7 @@ export default function HomePage() {
               advancement, I'm here to help you succeed.
             </p>
             <Button
+              variant="gradient"
               onClick={handleStartNewChat}
               size="lg"
               className="text-lg px-8 py-6"
@@ -149,14 +147,6 @@ export default function HomePage() {
               </div>
             </CardContent>
           </Card>
-        </div>
-        <div className="flex justify-center">
-          <MessageInput
-            onSendMessage={() => {}}
-            // isLoading={isStreaming}
-            // disabled={!chatSession || isStreaming}
-            // stopStreaming={stopStreaming}
-          />
         </div>
       </div>
     </MainLayout>
