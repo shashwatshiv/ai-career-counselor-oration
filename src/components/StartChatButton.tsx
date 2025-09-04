@@ -29,7 +29,6 @@ export function StartChatButton() {
 
   return (
     <Button
-      variant="gradient"
       size="lg"
       className="text-lg px-8 py-6"
       disabled={createSessionMutation.isPending}

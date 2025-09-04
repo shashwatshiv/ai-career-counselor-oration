@@ -107,9 +107,7 @@ export function MainLayout({
           {!userSession && (
             <div className="p-4">
               <Link href="/auth/signin">
-                <Button variant="gradient" className="w-full">
-                  Login
-                </Button>
+                <Button className="w-full">Login</Button>
               </Link>
             </div>
           )}
@@ -134,7 +132,7 @@ export function MainLayout({
             {!userSession && (
               <div>
                 <Link href="/auth/signin">
-                  <Button variant="gradient"> Login</Button>
+                  <Button> Login</Button>
                 </Link>
               </div>
             )}

@@ -7,7 +7,7 @@ const SigninButton = () => {
     <div>
       <Button
         onClick={() => signIn("google", { callbackUrl: "/", redirect: true })}
-        className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white border-0"
+        className="w-full   border-0"
         size="lg"
       >
         <svg className="mr-2 h-4 w-4" viewBox="0 0 24 24">

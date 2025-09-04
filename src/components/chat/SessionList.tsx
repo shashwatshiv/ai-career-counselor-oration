@@ -133,7 +133,6 @@ export function SessionList({ currentSessionId }: SessionListProps) {
   return (
     <div className="space-y-3 p-4">
       <Button
-        variant="gradient"
         onClick={handleCreateSession}
         className="w-full"
         disabled={createSessionMutation.isPending}
