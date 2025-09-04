@@ -5,8 +5,7 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-export const createTRPCContext = async (opts: { req: Request }) => {
-  const { req } = opts;
+export const createTRPCContext = async (_opts: { req: Request }) => {
 
   try {
     const session = await getServerSession(authOptions);

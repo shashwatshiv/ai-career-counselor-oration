@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2, StopCircle } from "lucide-react";
+import { Send, StopCircle } from "lucide-react";
 
 interface MessageInputProps {
   onSendMessage: (content: string) => void;

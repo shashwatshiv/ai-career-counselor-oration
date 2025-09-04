@@ -10,14 +10,6 @@ const nextConfig: NextConfig = {
       "@radix-ui/react-avatar",
       "@radix-ui/react-dropdown-menu",
     ],
-    turbo: {
-      rules: {
-        "*.svg": {
-          loaders: ["@svgr/webpack"],
-          as: "*.js",
-        },
-      },
-    },
   },
 
   // Compression and optimization

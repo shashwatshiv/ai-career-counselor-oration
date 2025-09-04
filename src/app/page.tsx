@@ -1,5 +1,4 @@
-import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { StartChatButton } from "@/components/StartChatButton";
 import { MainLayout } from "@/components/layout/MainLayout";
 import {
   Card,
@@ -8,67 +7,23 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { useTRPC } from "@/lib/trpc/client";
-import { MessageSquare, Plus, TrendingUp, Users, BookOpen } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
-
-export default function HomePage() {
-  const api = useTRPC();
-  const { data: userSession, status } = useSession();
-  const router = useRouter();
-
-  const createSessionMutation = useMutation(
-    api.chat.createSession.mutationOptions({
-      onSuccess: (session) => {
-        router.push(`/chat/${session.id}`);
-      },
-    }),
-  );
-
-  if (status === "loading") {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto"></div>
-          <p className="mt-4 text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
-  const handleStartNewChat = () => {
-    if (status === "authenticated") {
-      createSessionMutation.mutate({});
-    } else {
-      router.push("/auth/signin");
-    }
-  };
-
+import { TrendingUp, Users, BookOpen } from "lucide-react";
+export default async function HomePage() {
   return (
     <MainLayout>
-      <div className="flex-1 overflow-y-auto h-full mt-10 ">
+      <div className="flex-1 overflow-y-auto h-full mt-10">
         <div className="max-w-4xl mx-auto p-6 space-y-8">
           {/* Welcome Section */}
           <div className="text-center space-y-4">
-            <h1 className="text-4xl font-bold text-foreground ">
+            <h1 className="text-4xl font-bold text-foreground">
               Welcome to Career Counselor AI
             </h1>
             <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
-              Get personalized career guidance powered by AI. Whether you're
-              starting your career, looking to make a change, or seeking
-              advancement, I'm here to help you succeed.
+              Get personalized career guidance powered by AI. Whether
+              you&apos;re starting your career, looking to make a change, or
+              seeking advancement, I&apos;m here to help you succeed.
             </p>
-            <Button
-              variant="gradient"
-              onClick={handleStartNewChat}
-              size="lg"
-              className="text-lg px-8 py-6"
-              disabled={createSessionMutation.isPending}
-            >
-              <MessageSquare className="mr-2 h-5 w-5" />
-              Start Career Counseling
-            </Button>
+            <StartChatButton />
           </div>
 
           {/* Features Grid */}
@@ -106,8 +61,6 @@ export default function HomePage() {
               </CardHeader>
             </Card>
           </div>
-
-          {/* Getting Started Tips */}
           <Card className="hover:shadow-xl hover:scale-105 shadow-md transition-all duration-300">
             <CardHeader>
               <CardTitle>Getting Started Tips</CardTitle>

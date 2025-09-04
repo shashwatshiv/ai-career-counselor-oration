@@ -19,7 +19,6 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { MessageSquare, MoreVertical, Edit, Trash2, Plus } from "lucide-react";
-import { format } from "date-fns";
 import Link from "next/link";
 import { useState } from "react";
 import { useParams, useRouter } from "next/navigation";
@@ -61,11 +60,10 @@ export function SessionList({ currentSessionId }: SessionListProps) {
     isFetchingNextPage,
   } = useInfiniteQuery({
     ...api.chat.getSessions.infiniteQueryOptions(
-      { limit: 8 }, // Your query input
+      { limit: 8 },
       {
         enabled: !!userSession,
         getNextPageParam: (lastPage) => lastPage.nextCursor,
-        // Optional: Configure initial page param if needed
       },
     ),
   });
@@ -92,8 +90,7 @@ export function SessionList({ currentSessionId }: SessionListProps) {
 
   const deleteSessionMutation = useMutation(
     api.chat.deleteSession.mutationOptions({
-      onSuccess: (data, variables, context) => {
-        queryClient.ensureInfiniteQueryData;
+      onSuccess: (_data, variables, _context) => {
         queryClient.invalidateQueries(
           api.chat.getSessions.infiniteQueryFilter(),
         );
@@ -240,6 +237,11 @@ export function SessionList({ currentSessionId }: SessionListProps) {
           </CardContent>
         </Card>
       ))}
+      {error && (
+        <div className="text-red-500">
+          Error loading sessions: {error.message}
+        </div>
+      )}
       {hasNextPage && (
         <Button
           variant="outline"

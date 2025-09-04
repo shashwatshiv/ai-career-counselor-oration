@@ -3,8 +3,8 @@
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Card } from "@/components/ui/card";
 import { format } from "date-fns";
-import { type Message } from "../../generated/prisma";
-import { Bot, BrainCircuit, User } from "lucide-react";
+import { type Message } from "@prisma/client";
+import { BrainCircuit, User } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 
 interface MessageProps {
@@ -15,7 +15,6 @@ interface MessageProps {
 
 export function ChatMessage({ message, userImage, userName }: MessageProps) {
   const isUser = message.role === "USER";
-  const isAI = message.role === "ASSISTANT";
 
   return (
     <div

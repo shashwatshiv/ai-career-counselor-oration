@@ -19,54 +19,11 @@ Guidelines:
 - Ask follow-up questions to better understand their situation
 - Provide actionable advice and concrete next steps
 - Be honest about challenges while maintaining optimism
-- Respect confidentiality and create a safe space for discussion
 - Tailor your advice to the individual's specific situation and goals
 - Only talk about anything that are related to Career Counseling. 
 
 Remember to maintain a warm, professional tone and focus on empowering the person to make informed career decisions.`;
 
-// Keep the existing function for non-streaming operations
-export async function getChatResponse(
-  messages: { role: string; content: string }[],
-) {
-  try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
-    const chat = model.startChat({
-      history: [
-        {
-          role: "user",
-          parts: [{ text: CAREER_COUNSELOR_PROMPT }],
-        },
-        {
-          role: "model",
-          parts: [
-            {
-              text: "Hello! I'm here to help you with your career journey. I'm an experienced career counselor, and I'm excited to work with you to explore your goals, identify opportunities, and create a path forward. What would you like to discuss about your career today?",
-            },
-          ],
-        },
-        ...messages.slice(0, -1).map((msg) => ({
-          role: msg.role === "USER" ? "user" : "model",
-          parts: [{ text: msg.content }],
-        })),
-      ],
-    });
-
-    const lastMessage = messages[messages.length - 1];
-    const result = await chat.sendMessage(lastMessage.content);
-    const response = await result.response;
-
-    return response.text();
-  } catch (error) {
-    console.error("Gemini AI Error:", error);
-    throw new Error(
-      "Sorry, I'm having trouble connecting to my knowledge base. Please try again in a moment.",
-    );
-  }
-}
-
-// New streaming function that returns an Observable
 export function getChatResponseStream(
   messages: { role: string; content: string }[],
 ): Observable<string> {

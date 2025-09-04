@@ -1,5 +1,5 @@
 "use client";
-
+import DefaultChatContent from "@/components/DefaultChatContent";
 import { useSession } from "next-auth/react";
 import ReactMarkdown from "react-markdown";
 import { useEffect, useRef, useState } from "react";
@@ -21,7 +21,7 @@ export default function ChatPage() {
   const queryClient = useQueryClient();
   const params = useParams();
   const router = useRouter();
-  const { data: userSession, status: userStatus } = useSession();
+  const { data: userSession } = useSession();
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [isStreaming, setIsStreaming] = useState(false);
   const [streamingMessage, setStreamingMessage] = useState("");
@@ -146,7 +146,7 @@ export default function ChatPage() {
 
   if (isLoading) {
     return (
-      <MainLayout currentSessionId={sessionId}>
+      <MainLayout>
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4" />
@@ -159,7 +159,7 @@ export default function ChatPage() {
 
   if (error) {
     return (
-      <MainLayout currentSessionId={sessionId}>
+      <MainLayout>
         <div className="flex-1 flex items-center justify-center p-4">
           <Card className="p-6 max-w-md w-full">
             <Alert variant="destructive">
@@ -184,19 +184,8 @@ export default function ChatPage() {
   }
 
   return (
-    <MainLayout
-      currentSessionId={sessionId}
-      chatStarted={chatSession?.messages?.length}
-    >
+    <MainLayout>
       <div className="flex-1 flex flex-col h-full ">
-        {/* Chat header */}
-        {/* <div className="border-b p-4 bg-card flex-shrink-0">
-          <h2 className="font-semibold truncate">{chatSession?.title}</h2>
-          <p className="text-sm text-muted-foreground">
-            {chatSession?.messages?.length} messages
-          </p>
-        </div> */}
-
         {/* Messages */}
         <div
           ref={messagesContainerRef}
@@ -205,40 +194,7 @@ export default function ChatPage() {
         >
           <div className=" flex-1 md:w-5/6 w-full my-10 mx-auto">
             {chatSession?.messages.length === 0 && !subscriptionInput ? (
-              <div className="flex-1 flex items-center  justify-center text-center">
-                <div className="max-w-md">
-                  <div className="text-4xl mb-4">👋</div>
-                  <h3 className="text-lg font-semibold mb-2">
-                    Welcome to Career Counseling
-                  </h3>
-                  <p className="text-muted-foreground mb-6">
-                    I'm here to help you navigate your career journey. You can
-                    ask me about:
-                  </p>
-                  <div className="grid grid-cols-1 gap-2 text-sm text-left">
-                    <div className="p-3 bg-muted rounded-lg">
-                      <strong>Career Planning:</strong> Goal setting, career
-                      paths, industry insights
-                    </div>
-                    <div className="p-3 bg-muted rounded-lg">
-                      <strong>Job Search:</strong> Resume tips, interview prep,
-                      networking strategies
-                    </div>
-                    <div className="p-3 bg-muted rounded-lg">
-                      <strong>Skill Development:</strong> Learning
-                      recommendations, certifications
-                    </div>
-                    <div className="p-3 bg-muted rounded-lg">
-                      <strong>Career Transitions:</strong> Changing fields,
-                      career pivots, next steps
-                    </div>
-                  </div>
-                  <p className="text-muted-foreground mt-4">
-                    Start by telling me about your career goals or any
-                    challenges you're facing!
-                  </p>
-                </div>
-              </div>
+              <DefaultChatContent />
             ) : (
               <>
                 {chatSession?.messages?.map((message) => (

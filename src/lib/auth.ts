@@ -18,7 +18,6 @@ export const authOptions: NextAuthOptions = {
         ...session.user,
         id: user.id,
       },
-      //session.user.id = user.id
     }),
   },
   pages: {
@@ -26,12 +25,3 @@ export const authOptions: NextAuthOptions = {
   },
   secret: process.env.NEXTAUTH_SECRET,
 };
-
-interface Session {
-  user: {
-    id: string;
-    name?: string | null;
-    email?: string | null;
-    image?: string | null;
-  };
-}
