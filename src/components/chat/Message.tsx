@@ -42,7 +42,7 @@ export function ChatMessage({ message, userImage, userName }: MessageProps) {
       </Avatar>
 
       <Card
-        className={`max-w-[70%] p-3 rounded-3xl  ${
+        className={`max-w-[80%] p-3 rounded-3xl  ${
           isUser
             ? "dark:bg-blue-900 rounded-tr-none  bg-blue-100 dark:text-white "
             : "bg-muted rounded-tl-none"

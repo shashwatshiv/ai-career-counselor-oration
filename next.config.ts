@@ -24,30 +24,6 @@ const nextConfig: NextConfig = {
   },
 
   // Bundle optimization
-  webpack: (config, { dev, isServer }) => {
-    // Optimize bundle splitting
-    if (!dev && !isServer) {
-      config.optimization.splitChunks = {
-        ...config.optimization.splitChunks,
-        cacheGroups: {
-          ...config.optimization.splitChunks.cacheGroups,
-          vendor: {
-            test: /[\\/]node_modules[\\/]/,
-            name: "vendors",
-            chunks: "all",
-            priority: 10,
-          },
-          ai: {
-            test: /[\\/]node_modules[\\/](@google|@trpc)[\\/]/,
-            name: "ai-vendor",
-            chunks: "all",
-            priority: 20,
-          },
-        },
-      };
-    }
-    return config;
-  },
 
   // Headers for better caching
   async headers() {
@@ -66,15 +42,6 @@ const nextConfig: NextConfig = {
           {
             key: "X-XSS-Protection",
             value: "1; mode=block",
-          },
-        ],
-      },
-      {
-        source: "/api/(.*)",
-        headers: [
-          {
-            key: "Cache-Control",
-            value: "public, max-age=0, s-maxage=86400, stale-while-revalidate",
           },
         ],
       },
