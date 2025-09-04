@@ -49,7 +49,7 @@ export function ChatMessage({ message, userImage, userName }: MessageProps) {
         }`}
       >
         <div className="space-y-2">
-          <div className=" leading-relaxed whitespace-pre-wrap ">
+          <div className=" text-sm md:text-base leading-relaxed whitespace-pre-wrap ">
             <ReactMarkdown>{message.content}</ReactMarkdown>
           </div>
           <div

@@ -83,7 +83,9 @@ export function SessionList({ currentSessionId }: SessionListProps) {
       onSuccess: () => {
         setEditingSession(null);
         setNewTitle("");
-        queryClient.invalidateQueries(api.chat.getSessions.queryFilter());
+        queryClient.invalidateQueries(
+          api.chat.getSessions.infiniteQueryFilter(),
+        );
       },
     }),
   );

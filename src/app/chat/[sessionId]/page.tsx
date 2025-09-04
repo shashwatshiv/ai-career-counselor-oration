@@ -50,8 +50,8 @@ export default function ChatPage() {
       { sessionId },
       {
         enabled: !!sessionId && !!userSession,
-      }
-    )
+      },
+    ),
   );
 
   // Move useSubscription to the top level of the component
@@ -90,13 +90,15 @@ export default function ChatPage() {
           setIsStreaming(false);
           setStreamingMessage("");
           queryClient.invalidateQueries(
-            api.chat.getSession.queryFilter({ sessionId })
+            api.chat.getSession.queryFilter({ sessionId }),
           );
-          setTimeout(() => scrollToBottom(), 0);
-          queryClient.invalidateQueries(api.chat.getSessions.queryFilter());
+          setTimeout(() => scrollToBottom(), 50);
+          queryClient.invalidateQueries(
+            api.chat.getSessions.infiniteQueryFilter(),
+          );
         }
       },
-    })
+    }),
   );
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -140,7 +142,7 @@ export default function ChatPage() {
 
     // Refresh messages
     queryClient.invalidateQueries(
-      api.chat.getSession.queryFilter({ sessionId })
+      api.chat.getSession.queryFilter({ sessionId }),
     );
   };
 
@@ -214,7 +216,7 @@ export default function ChatPage() {
                         src={userSession?.user?.image || undefined}
                       />
                     </Avatar>
-                    <Card className=" dark:bg-blue-900 rounded-tr-none  bg-blue-100 dark:text-white  p-3">
+                    <Card className=" dark:bg-blue-900 rounded-tr-none text-sm md:text-base  bg-blue-100 dark:text-white  p-3">
                       <p>{subscriptionInput?.content}</p>
                     </Card>
                   </div>
@@ -225,7 +227,7 @@ export default function ChatPage() {
                     <div className="h-8 w-8 bg-background rounded-full flex items-center justify-center">
                       <Loader2 className="h-8 w-8 dark:text-white animate-spin" />
                     </div>
-                    <Card className="bg-muted p-3  rounded-tl-none">
+                    <Card className="bg-muted p-3 my-3 text-sm md:text-base rounded-tl-none">
                       <p className=" text-muted-foreground">
                         AI is thinking...
                       </p>
