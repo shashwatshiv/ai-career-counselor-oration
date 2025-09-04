@@ -131,11 +131,13 @@ export function MainLayout({
               </Button>
               <h1 className="font-semibold">Career Counselor</h1>
             </div>
-            <div>
-              <Link href="/auth/signin">
-                <Button variant="gradient"> Login</Button>
-              </Link>
-            </div>
+            {!userSession && (
+              <div>
+                <Link href="/auth/signin">
+                  <Button variant="gradient"> Login</Button>
+                </Link>
+              </div>
+            )}
           </div>
         </header>
 

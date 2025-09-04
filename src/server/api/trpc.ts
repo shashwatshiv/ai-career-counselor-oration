@@ -5,7 +5,6 @@ import { initTRPC, TRPCError } from "@trpc/server";
 import superjson from "superjson";
 import { ZodError } from "zod";
 
-
 export const createTRPCContext = async (opts: { req: Request }) => {
   const { req } = opts;
 
@@ -53,5 +52,3 @@ const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
 });
 
 export const protectedProcedure = t.procedure.use(enforceUserIsAuthed);
-
-

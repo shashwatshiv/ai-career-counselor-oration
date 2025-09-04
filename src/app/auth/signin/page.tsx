@@ -9,22 +9,11 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 
 export default function SignIn() {
-  const router = useRouter();
-
-  // useEffect(() => {
-  //   getSession().then((session) => {
-  //     if (session) {
-  //       router.push("/");
-  //     }
-  //   });
-  // }, [router]);
-
   return (
     <div className="min-h-screen flex flex-col items-center justify-center p-4">
       {/* Page Header */}

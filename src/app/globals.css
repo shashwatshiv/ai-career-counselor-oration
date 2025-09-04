@@ -44,11 +44,10 @@
 }
 
 :root {
-  --aw-color-bg-page: oklch(1 0 0); /* light background */
-  --aw-color-bg-page-dark: oklch(0.145 0 0); /* dark background */
-  --color-grid: oklch(0.95 0 0); /* grid line color */
+  --aw-color-bg-page: oklch(1 0 0);
+  --aw-color-bg-page-dark: oklch(0.145 0 0);
+  --color-grid: oklch(0.95 0 0);
   --radius: 0.625rem;
-  /* --background: oklch(1 0 0); */
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -83,8 +82,7 @@
 
 .dark {
   --aw-color-bg-page: var(--aw-color-bg-page-dark);
-  --color-grid: oklch(0.25 0 0); /* darker grid lines in dark mode */
-  /* --background: oklch(0.145 0 0); */
+  --color-grid: oklch(0.25 0 0);
   --foreground: oklch(0.984 0.003 247.858);
   --card: oklch(0.278 0 0);
   --card-foreground: oklch(0.984 0.003 247.858);
@@ -117,14 +115,6 @@
   --sidebar-ring: oklch(0.551 0.027 264.364);
 }
 
-/* @layer base {
-  * {
-    @apply border-border outline-ring/50;
-  }
-  body {
-    @apply bg-background text-foreground;
-  }
-} */
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -132,11 +122,21 @@
 
   body {
     @apply text-foreground;
-
     background-color: var(--aw-color-bg-page);
+    /* Simplified grid pattern - less CPU intensive */
     background-image: linear-gradient(var(--color-grid) 1px, transparent 1px),
       linear-gradient(90deg, var(--color-grid) 1px, transparent 1px);
     background-size: 30px 30px;
-    background-attachment: fixed;
+    /* Use local attachment for better performance on mobile */
+    background-attachment: local;
+  }
+
+  /* Optimize animations for better performance */
+  @media (prefers-reduced-motion: reduce) {
+    * {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
   }
 }

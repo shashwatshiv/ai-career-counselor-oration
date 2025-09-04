@@ -31,7 +31,7 @@ export function ProviderApp({ children }: { children: React.ReactNode }) {
           }),
         }),
       ],
-    }),
+    })
   );
 
   return (
@@ -41,9 +41,4 @@ export function ProviderApp({ children }: { children: React.ReactNode }) {
       </TRPCProvider>
     </QueryClientProvider>
   );
-  // return (
-  //   <api.Provider client={trpcClient} queryClient={queryClient}>
-  //     <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  //   </api.Provider>
-  // );
 }

@@ -204,7 +204,7 @@ export default function ChatPage() {
           className="flex-1  p-4   overflow-y-auto space-y-4"
         >
           <div className=" flex-1 md:w-5/6 w-full my-10 mx-auto">
-            {!subscriptionInput ? (
+            {chatSession?.messages.length === 0 && !subscriptionInput ? (
               <div className="flex-1 flex items-center  justify-center text-center">
                 <div className="max-w-md">
                   <div className="text-4xl mb-4">👋</div>
