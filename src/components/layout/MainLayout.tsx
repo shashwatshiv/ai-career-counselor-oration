@@ -66,10 +66,7 @@ export function MainLayout({
           </div>
           {/* Session list */}
           <div className="flex-1 overflow-y-auto">
-            <SessionList
-              currentSessionId={currentSessionId}
-              chatStarted={chatStarted}
-            />
+            <SessionList />
           </div>
           {/* User menu */}
           {userSession?.user && (

@@ -29,12 +29,7 @@ import {
   useInfiniteQuery,
 } from "@tanstack/react-query";
 
-interface SessionListProps {
-  currentSessionId?: string;
-  chatStarted?: number;
-}
-
-export function SessionList({ currentSessionId }: SessionListProps) {
+export function SessionList() {
   const api = useTRPC();
   const queryClient = useQueryClient();
   const { data: userSession, status } = useSession();
@@ -50,7 +45,7 @@ export function SessionList({ currentSessionId }: SessionListProps) {
       { enabled: !!sessionId && !!userSession },
     ),
   );
-
+  const currentSessionId = sessionsData?.id;
   const {
     data,
     isLoading,
@@ -149,7 +144,7 @@ export function SessionList({ currentSessionId }: SessionListProps) {
           className={` group transition-colors p-1 w-full border-0 shadow-none  my-1 hover:bg-zinc-100 dark:hover:bg-zinc-600 ${
             currentSessionId === session.id
               ? " bg-zinc-200 dark:bg-zinc-700"
-              : ""
+              : " "
           }`}
         >
           <CardContent className="">
