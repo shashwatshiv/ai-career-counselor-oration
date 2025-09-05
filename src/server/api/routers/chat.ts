@@ -1,7 +1,10 @@
 import { z } from "zod";
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { generateSessionTitle, getChatResponseStream } from "@/lib/ai/gemini";
 import { TRPCError } from "@trpc/server";
+import {
+  generateSessionTitle,
+  getChatResponseStreamGenerator,
+} from "@/lib/ai/gemini";
 
 export const chatRouter = createTRPCRouter({
   // Create a new chat session
@@ -198,109 +201,47 @@ export const chatRouter = createTRPCRouter({
           content: msg.content,
         }));
 
-        // Start streaming response
-        const stream = getChatResponseStream(messageHistory);
-
+        // Stream the response using the new async generator
         let fullResponse = "";
 
-        // Convert observable to async iterator
-        const streamIterator = {
-          [Symbol.asyncIterator]: () => {
-            let isComplete = false;
-            let error: Error | null = null;
-            const chunks: string[] = [];
-            let resolveNext: ((value: IteratorResult<string>) => void) | null =
-              null;
-
-            // Subscribe to the stream
-            stream.subscribe({
-              next: (chunk) => {
-                chunks.push(chunk);
-                if (resolveNext) {
-                  const resolve = resolveNext;
-                  resolveNext = null;
-                  resolve({ value: chunk, done: false });
-                }
-              },
-              error: (err) => {
-                error = err;
-                if (resolveNext) {
-                  const resolve = resolveNext;
-                  resolveNext = null;
-                  resolve({ value: undefined, done: true });
-                }
-              },
-              complete: () => {
-                isComplete = true;
-                if (resolveNext) {
-                  const resolve = resolveNext;
-                  resolveNext = null;
-                  resolve({ value: undefined, done: true });
-                }
-              },
-            });
-
-            return {
-              async next(): Promise<IteratorResult<string>> {
-                if (error) throw error;
-
-                if (chunks.length > 0) {
-                  return { value: chunks.shift()!, done: false };
-                }
-
-                if (isComplete) {
-                  return { value: undefined, done: true };
-                }
-
-                // Wait for next chunk
-                return new Promise<IteratorResult<string>>((resolve) => {
-                  resolveNext = resolve;
-                });
-              },
-            };
-          },
-        };
-
-        // Yield each chunk from the stream
-        for await (const chunk of streamIterator) {
+        for await (const chunk of getChatResponseStreamGenerator(
+          messageHistory,
+        )) {
           fullResponse += chunk;
           yield chunk;
         }
 
-        // After streaming is complete, save the assistant message
-        try {
-          await ctx.prisma.message.create({
-            data: {
-              sessionId: input.sessionId,
-              content: fullResponse,
-              role: "ASSISTANT",
-            },
-          });
+        // After streaming is complete, save the assistant message and update session
+        const messagePromise = ctx.prisma.message.create({
+          data: {
+            sessionId: input.sessionId,
+            content: fullResponse,
+            role: "ASSISTANT",
+          },
+        });
 
-          // Update session title if it's the first message
-          if (session.messages.length === 0 && session.title === "New Chat") {
-            const newTitle = generateSessionTitle(input.content);
-            await ctx.prisma.chatSession.update({
-              where: { id: input.sessionId },
-              data: {
-                title: newTitle,
-                updatedAt: new Date(),
-              },
-            });
-          } else {
-            // Just update the timestamp
-            await ctx.prisma.chatSession.update({
-              where: { id: input.sessionId },
-              data: { updatedAt: new Date() },
-            });
-          }
-        } catch (_error) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to save assistant message",
-          });
+        // Conditionally update session title or just timestamp
+        const sessionPromise =
+          session.messages.length === 0 && session.title === "New Chat"
+            ? ctx.prisma.chatSession.update({
+                where: { id: input.sessionId },
+                data: {
+                  title: generateSessionTitle(input.content),
+                  updatedAt: new Date(),
+                },
+              })
+            : ctx.prisma.chatSession.update({
+                where: { id: input.sessionId },
+                data: { updatedAt: new Date() },
+              });
+
+        // Execute all database updates in parallel
+        await Promise.all([messagePromise, sessionPromise]);
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
         }
-      } catch (_error) {
+
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
           message: "Failed to process stream",

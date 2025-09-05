@@ -1,5 +1,4 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
-import { Observable } from "rxjs";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
 
@@ -19,67 +18,55 @@ Guidelines:
 - Ask follow-up questions to better understand their situation
 - Provide actionable advice and concrete next steps
 - Be honest about challenges while maintaining optimism
+- Respect confidentiality and create a safe space for discussion
 - Tailor your advice to the individual's specific situation and goals
 - Only talk about anything that are related to Career Counseling. 
 
 Remember to maintain a warm, professional tone and focus on empowering the person to make informed career decisions.`;
 
-export function getChatResponseStream(
+// NEW: Async Generator version - THE OPTIMIZED ONE
+export async function* getChatResponseStreamGenerator(
   messages: { role: string; content: string }[],
-): Observable<string> {
-  return new Observable((subscriber) => {
-    const processStream = async () => {
-      try {
-        const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+): AsyncGenerator<string, void, unknown> {
+  try {
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-        const chat = model.startChat({
-          history: [
+    const chat = model.startChat({
+      history: [
+        {
+          role: "user",
+          parts: [{ text: CAREER_COUNSELOR_PROMPT }],
+        },
+        {
+          role: "model",
+          parts: [
             {
-              role: "user",
-              parts: [{ text: CAREER_COUNSELOR_PROMPT }],
+              text: "Hello! I'm here to help you with your career journey. I'm an experienced career counselor, and I'm excited to work with you to explore your goals, identify opportunities, and create a path forward. What would you like to discuss about your career today?",
             },
-            {
-              role: "model",
-              parts: [
-                {
-                  text: "Hello! I'm here to help you with your career journey. I'm an experienced career counselor, and I'm excited to work with you to explore your goals, identify opportunities, and create a path forward. What would you like to discuss about your career today?",
-                },
-              ],
-            },
-            ...messages.slice(0, -1).map((msg) => ({
-              role: msg.role === "USER" ? "user" : "model",
-              parts: [{ text: msg.content }],
-            })),
           ],
-        });
+        },
+        ...messages.slice(0, -1).map((msg) => ({
+          role: msg.role === "USER" ? "user" : "model",
+          parts: [{ text: msg.content }],
+        })),
+      ],
+    });
 
-        const lastMessage = messages[messages.length - 1];
-        const result = await chat.sendMessageStream(lastMessage.content);
+    const lastMessage = messages[messages.length - 1];
+    const result = await chat.sendMessageStream(lastMessage.content);
 
-        let fullText = "";
-
-        for await (const chunk of result.stream) {
-          const chunkText = chunk.text();
-          if (chunkText) {
-            fullText += chunkText;
-            subscriber.next(chunkText);
-          }
-        }
-
-        subscriber.complete();
-        return fullText;
-      } catch (error) {
-        console.error("Gemini AI Streaming Error:", error);
-        subscriber.error(
-          new Error(
-            "Sorry, I'm having trouble connecting to my knowledge base. Please try again in a moment.",
-          ),
-        );
+    for await (const chunk of result.stream) {
+      const chunkText = chunk.text();
+      if (chunkText) {
+        yield chunkText;
       }
-    };
-
-    processStream();
-  });
+    }
+  } catch (error) {
+    console.error("Gemini AI Streaming Error:", error);
+    throw new Error(
+      "Sorry, I'm having trouble connecting to my knowledge base. Please try again in a moment.",
+    );
+  }
 }
 
 export function generateSessionTitle(firstMessage: string): string {
