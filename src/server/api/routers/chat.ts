@@ -24,7 +24,7 @@ export const chatRouter = createTRPCRouter({
       z.object({
         limit: z.number().min(1).max(100).default(8),
         cursor: z.string().optional(),
-      }),
+      })
     )
     .query(async ({ ctx, input }) => {
       const sessions = await ctx.prisma.chatSession.findMany({
@@ -59,7 +59,7 @@ export const chatRouter = createTRPCRouter({
     .input(
       z.object({
         sessionId: z.string(),
-      }),
+      })
     )
     .query(async ({ ctx, input }) => {
       const session = await ctx.prisma.chatSession.findFirst({
@@ -91,8 +91,8 @@ export const chatRouter = createTRPCRouter({
     .input(
       z.object({
         sessionId: z.string(),
-        title: z.string().min(1).max(50),
-      }),
+        title: z.string().min(1).max(100),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const session = await ctx.prisma.chatSession.findFirst({
@@ -120,7 +120,7 @@ export const chatRouter = createTRPCRouter({
     .input(
       z.object({
         sessionId: z.string(),
-      }),
+      })
     )
     .mutation(async ({ ctx, input }) => {
       const session = await ctx.prisma.chatSession.findFirst({
@@ -149,7 +149,7 @@ export const chatRouter = createTRPCRouter({
       z.object({
         sessionId: z.string(),
         content: z.string().min(1).max(2000),
-      }),
+      })
     )
     .subscription(async function* ({ ctx, input }) {
       try {
@@ -195,7 +195,7 @@ export const chatRouter = createTRPCRouter({
         let fullResponse = "";
 
         for await (const chunk of getChatResponseStreamGenerator(
-          messageHistory,
+          messageHistory
         )) {
           fullResponse += chunk;
           yield chunk;
@@ -216,7 +216,7 @@ export const chatRouter = createTRPCRouter({
             ? ctx.prisma.chatSession.update({
                 where: { id: input.sessionId },
                 data: {
-                  title: generateSessionTitle(input.content),
+                  title: await generateSessionTitle(input.content),
                   updatedAt: new Date(),
                 },
               })

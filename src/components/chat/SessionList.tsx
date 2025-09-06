@@ -42,8 +42,8 @@ export function SessionList() {
   const { data: sessionData } = useQuery(
     api.chat.getSession.queryOptions(
       { sessionId },
-      { enabled: !!sessionId && !!userSession },
-    ),
+      { enabled: !!sessionId && !!userSession }
+    )
   );
   const currentSessionId = sessionData?.id;
   const {
@@ -59,7 +59,7 @@ export function SessionList() {
       {
         enabled: !!userSession,
         getNextPageParam: (lastPage) => lastPage.nextCursor,
-      },
+      }
     ),
   });
 
@@ -70,7 +70,7 @@ export function SessionList() {
       onSuccess: (session) => {
         router.push(`/chat/${session.id}`);
       },
-    }),
+    })
   );
 
   const updateTitleMutation = useMutation(
@@ -79,23 +79,23 @@ export function SessionList() {
         setEditingSession(null);
         setNewTitle("");
         queryClient.invalidateQueries(
-          api.chat.getSessions.infiniteQueryFilter(),
+          api.chat.getSessions.infiniteQueryFilter()
         );
       },
-    }),
+    })
   );
 
   const deleteSessionMutation = useMutation(
     api.chat.deleteSession.mutationOptions({
       onSuccess: (_data, variables, _context) => {
         queryClient.invalidateQueries(
-          api.chat.getSessions.infiniteQueryFilter(),
+          api.chat.getSessions.infiniteQueryFilter()
         );
         if (variables.sessionId === currentSessionId) {
           router.push("/");
         }
       },
-    }),
+    })
   );
 
   const handleCreateSession = () => {
@@ -184,7 +184,7 @@ export function SessionList() {
                       </DropdownMenuItem>
                     </DialogTrigger>
                     {editingSession === session.id && (
-                      <DialogContent>
+                      <DialogContent className="bg-card">
                         <DialogHeader>
                           <DialogTitle>Rename Chat Session</DialogTitle>
                         </DialogHeader>

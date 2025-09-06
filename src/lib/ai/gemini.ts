@@ -1,6 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
+const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
 const CAREER_COUNSELOR_PROMPT = `You are an experienced and empathetic career counselor with over 15 years of experience helping people navigate their career paths. Your role is to:
 
@@ -27,11 +28,9 @@ Remember to maintain a warm, friendly tone and focus on empowering the person to
 
 // NEW: Async Generator version - THE OPTIMIZED ONE
 export async function* getChatResponseStreamGenerator(
-  messages: { role: string; content: string }[],
+  messages: { role: string; content: string }[]
 ): AsyncGenerator<string, void, unknown> {
   try {
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
-
     const chat = model.startChat({
       history: [
         {
@@ -65,23 +64,20 @@ export async function* getChatResponseStreamGenerator(
   } catch (error) {
     console.error("Gemini AI Streaming Error:", error);
     throw new Error(
-      "Sorry, I'm having trouble connecting to my knowledge base. Please try again in a moment.",
+      "Sorry, I'm having trouble connecting to my knowledge base. Please try again in a moment."
     );
   }
 }
 
-export function generateSessionTitle(firstMessage: string): string {
-  const words = firstMessage.split(" ").slice(0, 6);
-  let title = words.join(" ");
-
-  if (title.length > 50) {
-    title = title.substring(0, 47) + "...";
-  }
-
-  if (title.length < 10) {
+export async function generateSessionTitle(firstMessage: string) {
+  let title = "";
+  try {
+    const prompt = `Give me 1 suitable title in simple text (less than 5 words), nothing else for the following text which is the first messege to start a chat with a career couseling AI: ${firstMessage}`;
+    const response = await model.generateContent(prompt);
+    title = response.response.text();
+  } catch (_error) {
     title = "Career Discussion";
   }
 
   return title;
 }
-
