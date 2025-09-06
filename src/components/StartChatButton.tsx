@@ -21,7 +21,7 @@ export function StartChatButton() {
 
   const handleStartNewChat = () => {
     if (status === "authenticated") {
-      createSessionMutation.mutate({});
+      createSessionMutation.mutate();
     } else {
       router.push("/auth/signin");
     }

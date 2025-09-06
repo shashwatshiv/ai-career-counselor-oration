@@ -8,28 +8,21 @@ import {
 
 export const chatRouter = createTRPCRouter({
   // Create a new chat session
-  createSession: protectedProcedure
-    .input(
-      z.object({
-        title: z.string().optional(),
-        firstMessege: z.string().optional(),
-      }),
-    )
-    .mutation(async ({ ctx }) => {
-      const session = await ctx.prisma.chatSession.create({
-        data: {
-          userId: ctx.session.user.id,
-          title: "New Chat",
-        },
-      });
-      return session;
-    }),
+  createSession: protectedProcedure.mutation(async ({ ctx }) => {
+    const session = await ctx.prisma.chatSession.create({
+      data: {
+        userId: ctx.session.user.id,
+        title: "New Chat",
+      },
+    });
+    return session;
+  }),
 
   // Get all user sessions
   getSessions: protectedProcedure
     .input(
       z.object({
-        limit: z.number().min(1).max(100).default(20),
+        limit: z.number().min(1).max(100).default(8),
         cursor: z.string().optional(),
       }),
     )
@@ -43,12 +36,9 @@ export const chatRouter = createTRPCRouter({
         },
         take: input.limit + 1,
         cursor: input.cursor ? { id: input.cursor } : undefined,
-        include: {
-          _count: {
-            select: {
-              messages: true,
-            },
-          },
+        select: {
+          id: true,
+          title: true,
         },
       });
 
@@ -101,7 +91,7 @@ export const chatRouter = createTRPCRouter({
     .input(
       z.object({
         sessionId: z.string(),
-        title: z.string().min(1).max(100),
+        title: z.string().min(1).max(50),
       }),
     )
     .mutation(async ({ ctx, input }) => {

@@ -39,13 +39,13 @@ export function SessionList() {
   const params = useParams();
   const sessionId = params.sessionId as string;
 
-  const { data: sessionsData } = useQuery(
+  const { data: sessionData } = useQuery(
     api.chat.getSession.queryOptions(
       { sessionId },
       { enabled: !!sessionId && !!userSession },
     ),
   );
-  const currentSessionId = sessionsData?.id;
+  const currentSessionId = sessionData?.id;
   const {
     data,
     isLoading,
@@ -100,8 +100,8 @@ export function SessionList() {
 
   const handleCreateSession = () => {
     if (status === "authenticated") {
-      if (sessionsData?.messages.length === 0) return;
-      createSessionMutation.mutate({});
+      if (sessionData?.messages.length === 0) return;
+      createSessionMutation.mutate();
     } else {
       router.push("/auth/signin");
     }

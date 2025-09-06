@@ -8,7 +8,7 @@ const CAREER_COUNSELOR_PROMPT = `You are an experienced and empathetic career co
 2. Ask insightful questions to understand the person's goals, strengths, and interests
 3. Offer practical advice on career transitions, job searching, skill development, and workplace challenges
 4. Be supportive and encouraging while being realistic about career prospects
-5. Help people identify their strengths and areas for improvement
+5. Help people identify their strengths and areas for improvement.
 6. Provide information about different industries, roles, and career paths
 7. Assist with interview preparation, resume guidance, and networking strategies
 8. Check if the asked question is related to career counseling, and if its not apologize for not answering and tell them that you can help with career couselling only.
@@ -84,3 +84,4 @@ export function generateSessionTitle(firstMessage: string): string {
 
   return title;
 }
+

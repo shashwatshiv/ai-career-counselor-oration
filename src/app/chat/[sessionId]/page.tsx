@@ -15,7 +15,6 @@ import { useSubscription } from "@trpc/tanstack-react-query";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { Loader2, AlertCircle, RefreshCw } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-
 export default function ChatPage() {
   const api = useTRPC();
   const queryClient = useQueryClient();
@@ -50,8 +49,8 @@ export default function ChatPage() {
       { sessionId },
       {
         enabled: !!sessionId && !!userSession,
-      },
-    ),
+      }
+    )
   );
 
   // Move useSubscription to the top level of the component
@@ -90,15 +89,15 @@ export default function ChatPage() {
           setIsStreaming(false);
           setStreamingMessage("");
           queryClient.invalidateQueries(
-            api.chat.getSession.queryFilter({ sessionId }),
+            api.chat.getSession.queryFilter({ sessionId })
           );
           setTimeout(() => scrollToBottom(), 50);
           queryClient.invalidateQueries(
-            api.chat.getSessions.infiniteQueryFilter(),
+            api.chat.getSessions.infiniteQueryFilter()
           );
         }
       },
-    }),
+    })
   );
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -142,7 +141,7 @@ export default function ChatPage() {
 
     // Refresh messages
     queryClient.invalidateQueries(
-      api.chat.getSession.queryFilter({ sessionId }),
+      api.chat.getSession.queryFilter({ sessionId })
     );
   };
 
