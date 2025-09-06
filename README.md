@@ -18,11 +18,6 @@ _Welcome page with feature overview and getting started tips_
 ![Chat Interface](./screenshots/chat-interface.png)
 _Real-time chat with the AI career counselor_
 
-### 3. Session Management
-
-![Session Management](./screenshots/session-management.png)
-_View and manage your career counseling sessions_
-
 ### 4. Authentication
 
 ![Authentication](./screenshots/authentication.png)
@@ -41,7 +36,7 @@ _Secure Google OAuth authentication_
 ## 🛠️ Tech Stack
 
 - **Frontend**: Next.js 15, React 19, TypeScript
-- **Styling**: Tailwind CSS, Radix UI Components
+- **Styling**: Tailwind CSS, Radix UI Components, ShadCN UI
 - **Authentication**: NextAuth.js with Google OAuth
 - **Database**: PostgreSQL with Prisma ORM
 - **AI Integration**: Google Gemini 2.0 Flash
@@ -104,6 +99,7 @@ pnpm prisma generate
 pnpm prisma db push
 
 ```
+
 ### 5. Google Cloud Setup
 
 1. **Create a Google Cloud Project**:
@@ -188,6 +184,7 @@ pnpm build
 pnpm start
 
 ```
+
 ## 📝 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
@@ -206,7 +203,6 @@ If you have any questions or need help, please:
 
 1. Check the [Issues](https://github.com/your-username/career-counselor-ai/issues) page
 2. Create a new issue if your problem isn't already reported
-
 
 ---
 
